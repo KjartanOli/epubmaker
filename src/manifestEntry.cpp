@@ -20,17 +20,40 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <map>
 
 #include "../headers/manifestEntry.hpp"
 #include "../headers/misc.hpp"
-
-#include <iostream>
+#include "../headers/resourceType.hpp"
 
 ManifestEntry::ManifestEntry(std::string_view filename)
 :
 	id{get_basename(filename)},
 	mediaType{get_mediaType(get_extension(filename))}
 {
+	static std::map<std::string, resourceType> resourceTypeMap
+	{
+		{"application/xhhml+xhml", CHAPTER},
+		{"image/png", IMAGE},
+		{"image/jpeg", IMAGE},
+		{"text/css", STYLESHEET}
+	};
+
+	switch (resourceTypeMap[this->mediaType])
+	{
+		case CHAPTER:
+			this->href = "Text/" + std::string{filename};
+			break;
+
+		case IMAGE:
+			this->href = "Images/"  + std::string{filename};
+			break;
+
+		case STYLESHEET:
+			this->href = "Styles/" + std::string{filename};
+			break;
+	}
+/*
 	if (this->mediaType == "application/xhtml+xml")
 	{
 		this->href = ("Text/" + std::string{filename});
@@ -40,6 +63,7 @@ ManifestEntry::ManifestEntry(std::string_view filename)
 	{
 		this->href = "toc.ncx";
 	}
+*/
 }
 
 ManifestEntry::operator std::string() const

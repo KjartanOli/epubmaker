@@ -30,7 +30,7 @@
 			bool primary;
 
 		public:
-			SpineEntry(std::string_view id, bool primary = true);
+			SpineEntry(std::string_view filename, bool primary = true);
 			operator std::string() const;
 	};
 #endif

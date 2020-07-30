@@ -26,7 +26,6 @@
 	std::vector<T> filter(const std::vector<T>& vec, std::function<bool(T)> condition)
 	{
 		std::vector<T> res;
-
 		for (const T& el : vec)
 		{
 			if (condition(el))

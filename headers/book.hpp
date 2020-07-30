@@ -25,10 +25,10 @@
 	#include <vector>
 	#include <chrono>
 
+	#include "resource.hpp"
 	#include "manifestEntry.hpp"
-	#include "spineEntry.hpp"
 	#include "status.hpp"
-	#include "navPoint.hpp"
+	#include "chapter.hpp"
 
 	class Book
 	{
@@ -39,16 +39,19 @@
 			std::string language;
 			std::string identifier;
 			std::string publisher;
+			std::vector<Chapter> chapters;
+			Chapter cover;
+			Chapter toc;
+			std::vector<Resource> stylesheets;
+			std::vector<Resource> images;
 			std::time_t date;
-			std::vector<std::string> chapters;
-			std::vector<ManifestEntry> manifest;
-			std::vector<SpineEntry> spine;
-			std::vector<NavPoint> navMap;
 
 			// Utilities to generate the various structure files
-			std::string generate_opf();
-			std::string generate_ncx();
-			std::string generate_container_file();
+			std::string generate_opf() const;
+			std::string generate_ncx(bool cover, bool tableOfContents) const;
+			std::string generate_container_file() const;
+			std::string generate_toc(bool cover) const;
+			std::string generate_cover() const;
 
 		public:
 			Book(
@@ -58,11 +61,16 @@
 				std::string_view language,
 				std::string_view identifier,
 				std::string publisher,
-				const std::vector<std::string> chapters,
+				const std::vector<std::string>& chapters,
+				std::string_view coverFile,
+				std::string_view styleDir,
+				bool stylesheets,
+				std::string_view imgDir,
+				bool images,
 				std::time_t date
 					= std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())
 			);
-			statusCode write(std::string_view filename, bool force);
+			statusCode write(std::string_view filename, bool force, bool cover, bool tableOfContents);
 	};
 #endif
 

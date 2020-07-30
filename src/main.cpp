@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <map>
 #include <iostream>
+#include <filesystem>
 
 #include "../headers/filter.hpp"
 #include "../headers/chapter.hpp"
@@ -34,12 +35,15 @@
 #include "../headers/spineEntry.hpp"
 #include "../headers/navPoint.hpp"
 #include "../headers/book.hpp"
+#include "../headers/order.hpp"
 
 const std::string_view orderFile{"order.txt"};
 const short minArgs{2};
 
 void help(std::ostream& out = std::cerr);
 void version();
+
+namespace fs = std::filesystem;
 
 int main(int argc, char** argv)
 {
@@ -79,19 +83,19 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (!dir_exists(args.path))
+	if (!fs::exists(args.path))
 	{
 		std::cerr << "Directory " << args.path << " Does not exist\n";
 		return DIR_DOES_NOT_EXIST;
 	}
 
-	if (!file_exists(args.path.data(), orderFile.data()))
+	if (!fs::exists(fs::path{args.path + std::string{orderFile.data()}}))
 	{
 		std::cerr << "Directory " << args.path << " Does not contain a " << orderFile << " file\n";
 		return NO_ORDER_FILE;
 	}
 
-	std::ifstream order{args.path + orderFile.data()};
+	std::ifstream order{args.path + std::string{orderFile.data()}};
 	std::vector<std::string> chapters{};
 
 	if (std::string chapter{read_chapter_order(order, chapters)}; chapter != "")
@@ -105,28 +109,58 @@ int main(int argc, char** argv)
 	if (std::string chapter{verify_chapter_existance(chapters, args.path)}; chapter != "")
 	{
 			std::cerr << "Chapter " << chapter << " in " <<  args.path << orderFile << " does not exist\n";
-			return CHAPTER_DOES_NOT_EXSIST;
+			return CHAPTER_DOES_NOT_EXIST;
 	}
 
-	Book book{args.path, args.title, args.author, args.language, args.identifier, args.publisher, chapters};
-	statusCode status{book.write(args.outfile + ".epub", args.force)};
+	if (args.stylesheets)
+	{
+		if (!fs::exists(args.path + args.styleDir))
+		{
+			std::cerr << args.path << " does not contain a directory " << args.styleDir << '\n';
+			return STYLEDIR_DOES_NOT_EXIST;
+		}
+	}
+
+	if (args.images)
+	{
+		 if (!fs::exists(args.path + args.imgDir))
+		 {
+		 	std::cerr << args.path << " does not contain a directory " << args.imgDir << '\n';
+			return IMGDIR_DOES_NOT_EXIST;
+		 }
+	}
+
+	Book book
+	{
+		args.path,
+		args.title,
+		args.author,
+		args.language,
+		args.identifier,
+		args.publisher,
+		chapters,
+		args.coverFile,
+		args.styleDir,
+		args.stylesheets,
+		args.imgDir,
+		args.images
+	};
+
+	statusCode status{book.write(add_extension(args.outfile, ".epub"), args.force, args.cover, args.toc)};
 
 	switch (status)
 	{
 		case OUTFILE_EXISTS:
-			std::cerr << "Target file " << args.outfile << " already exists and --force was not specified\n";
+			std::cerr << "Target file " << args.path << args.outfile << " already exists and --force was not specified\n";
 			return OUTFILE_EXISTS;
 
-		case COULD_NOT_REMOVE:
-			std::cerr << "Could not remove " << args.outfile << '\n';
-			return COULD_NOT_REMOVE;
-
-		case NORMAL:
+			case NORMAL:
+			return NORMAL;
 			break;
 
 		default:
 			// This path should never be executed but not having it would cause a warning.
-			std::cerr << "Unkown error\n";
+			std::cerr << "Unknown error\n";
 			return UNKOWN_ERROR;
 	}
 
@@ -135,16 +169,57 @@ int main(int argc, char** argv)
 
 void help(std::ostream& out)
 {
-	// TODO write usage examples and option explainations
+	static std::string_view indent{"  "};
 
-	out << "Erorr codes\n\t" << NOT_ENOUGH_ARGUMENTS << "\tNot enough arguments vere provided\n"
-	<< '\t' << DIR_DOES_NOT_EXIST << "\tThe target directory does not exist\n"
-	<< '\t' << NO_ORDER_FILE << "\tNo " << orderFile << " was found in the target directory\n"
-	<< '\t' << INVALID_OPTION << "\tAn unrecognized option was passed\n"
-	<< '\t' << ARG_REQUIRED << "\tAn option that requiers an argument was not passed one\n"
-	<< '\t' << INVALID_CHAPTER_FILE << "\tA file listed in " << orderFile << " does not have a valid extension\n"
-	<< '\t' << CHAPTER_DOES_NOT_EXSIST << "\tA file listed in " << orderFile << " does not exist\n"
-	<< '\t' << OUTFILE_EXISTS << "\tThe target file already exists and --force was not specified\n"
-	<< '\t' << COULD_NOT_REMOVE << "\tCould not remove the target file when running with --force\n"
-	<< '\t' << UNKOWN_ERROR << "\tAn unknown error occured, this should never occur\n";
+	version();
+
+	out << "\nUsage: epubmaker [OPTIONS] DIRNAME\n"
+	<< "Create an epub file from a list of xhtml files\n"
+	<< "Example: epubmaker -a \"Kjartan Óli Ágústsson\" -t Test -p \"Example Ltd.\" -l en -i IDENTIFIER .\n\n"
+	<< "Options:\n"
+	<< indent << "Metadata:\n"
+	<< indent << indent << "-a, --author=AUTHOR              Set the author of the document\n"
+	<< indent << indent << "-t, --title=TITLE                Set the title of the document\n"
+	<< indent << indent << "-d, --date=DATE                  Set the publication date, if this argument is skipped the current date and time are used\n"
+	<< indent << indent << "-i, --identifier=IDENTIFIER      Set the identifier of the document\n"
+	<< indent << indent << "-l, --language=LANGUAGE          Set the language of the document\n"
+	<< indent << indent << "-p, --publisher=PUBLISHER        Set the publisher of the document\n"
+
+	<< '\n' << indent << "Input control:\n"
+	<< indent << indent <<  "-c, --cover=COVERFILE            Supply the path for a custom cover for the document. If this argument is skipped\n"
+	<< "                                     the file DIRNAME/cover.xhtml is used if it exists, else a cover is generated automatically\n"
+	<< indent << indent << "--img-dir=IMGDIR                 Specify a directory in which to search for images."
+	<< " If this argument is skipped\n"
+	<< "                                     the default of DIRNAME/Images is used\n"
+	<< indent << indent << "--no-cover                       Do not generate a cover for the document\n"
+	<< indent << indent << "--no-toc                         Do not generate a table of contents\n"
+	<< indent << indent << "--no-style                       Do not add any stylesheets to the document\n"
+	<< indent << indent << "--no-images                      Do not add any images to the document\n"
+	<< indent << indent << "--style-dir STYLEDIR             Specify a directory in which to search for stylesheets. If this argument is skipped\n"
+	<< "                                     the default of DIRNAME/Styles is used\n"
+	<< '\n' << indent << "Output control:\n"
+	<< indent << indent << "-f, --force                      Overwrite the output file if it already exists\n"
+	<< indent << indent << "-o, --outfile=OUTFILE            Set the file to write output to. If this argument is skipped\n"
+	<< "                                     output is written to DIRNAME/book.epub\n"
+
+	<< '\n' << indent << "Miscellaneous:\n"
+	<< indent << indent << "-h, --help                       Print this help and exit\n"
+	<< indent << indent << "-V, --version                    Print version information and exit\n"
+	<< '\n';
+
+	out << "Error codes:\n"
+	<< indent << NOT_ENOUGH_ARGUMENTS << "\tNot enough arguments were provided\n"
+	<< indent << DIR_DOES_NOT_EXIST << "\tThe target directory does not exist\n"
+	<< indent << NO_ORDER_FILE << "\tNo " << orderFile << " was found in the target directory\n"
+	<< indent << INVALID_OPTION << "\tAn unrecognised option was passed\n"
+	<< indent << ARG_REQUIRED << "\tAn option that requires an argument was not passed one\n"
+	<< indent << INVALID_CHAPTER_FILE << "\tA file listed in " << orderFile << " does not have a valid extension\n"
+	<< indent << CHAPTER_DOES_NOT_EXIST << "\tA file listed in " << orderFile << " does not exist\n"
+	<< indent << STYLEDIR_DOES_NOT_EXIST << "\tA directory for stylesheets does not exist and --no-style was not specified\n"
+	<< indent << IMGDIR_DOES_NOT_EXIST << "\tA directory for images does not exist and --no-images wan not specified\n"
+	<< indent << OUTFILE_EXISTS << "\tThe target file already exists and --force was not specified\n"
+	<< indent << COULD_NOT_OPEN << "\tFailed to open output file\n"
+	<< indent << UNKOWN_ERROR << "\tAn unknown error occurred, this should never occur\n"
+	<< '\n';
 }
+

@@ -25,9 +25,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <map>
+#include <regex>
+#include <filesystem>
 
 #include "../headers/misc.hpp"
 #include "../headers/status.hpp"
+#include "../headers/filter.hpp"
+#include "../headers/mediaType.hpp"
+
+namespace fs = std::filesystem;
 
 std::string get_extension(std::string_view filename)
 {
@@ -40,26 +46,6 @@ std::string get_extension(std::string_view filename)
 	}
 	return "";
 }
-
-bool dir_exists(std::string_view path)
-{
-	struct stat st{};
-
-	return (((stat(path.data(), &st) == 0)) && ((st.st_mode & S_IFMT) == S_IFDIR));
-}
-
-bool file_exists(std::string_view filename)
-{
-	struct stat st{};
-	return (stat(filename.data(), &st) == 0);
-}
-
-bool file_exists(const std::string& path, const std::string& filename)
-{
-	struct stat st{};
-	return (stat(std::string{path + '/' + filename}.c_str(), &st) == 0);
-}
-
 std::vector<std::string> split(std::string_view string, const char separator)
 {
 	std::vector<std::string> results{};
@@ -82,10 +68,16 @@ std::vector<std::string> split(std::string_view string, const char separator)
 	return results;
 }
 
-// get the name of a file without its extension
+// get the name of a file without its extension or path
 std::string get_basename(std::string_view filename)
 {
-	return split(filename, '.')[0];
+	return split(strip_path(filename), '.')[0];
+}
+
+std::string strip_path(std::string_view filename)
+{
+	static const std::regex path{"(.+/)+(.+)"};
+	return std::regex_replace(filename.data(), path, "$2");
 }
 
 std::string get_mediaType(std::string_view extension)
@@ -122,11 +114,45 @@ std::string get_mediaType(std::string_view extension)
 	return "should not happen";
 }
 
+// add the provided file extension to the file's name only if it is not already there
+std::string add_extension(std::string_view filename, std::string_view extension)
+{
+	std::regex ext{".+" + std::string{extension.data()} + '$'};
+
+	if (std::regex_match(filename.data(), ext))
+	{
+		return filename.data();
+	}
+	else
+	{
+		return std::string{filename.data()} + std::string{extension.data()};
+	}
+}
+
+std::vector<std::string> list_dir(std::string_view dirname)
+{
+	std::vector<std::string> results{};
+
+	for (auto& file : fs::directory_iterator(dirname))
+	{
+		results.push_back(file.path());
+	}
+
+	return results;
+}
+
+std::vector<std::string> get_stylesheets(std::string_view dirname)
+{
+	return filter<std::string>(list_dir(dirname), [](std::string_view filename){return split(strip_path(filename), '.')[1] == "css";});
+}
+
 void version()
 {
 	static const short major{1};
-	static const short minor{0};
+	static const short minor{1};
 	static const short hotfix{0};
 
-	std::cout << "EpubMaker " << major << '.' << minor << '.' << hotfix << '\n';
+	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
+	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"
+	<< "This is free software, and you are welcome to redistribute it\n";
 }

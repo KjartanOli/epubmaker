@@ -26,6 +26,7 @@
 #include <vector>
 #include <chrono>
 #include <cstdio>
+#include <filesystem>
 
 #include <libzippp/libzippp.h>
 
@@ -36,7 +37,7 @@
 #include "../headers/misc.hpp"
 #include "../headers/status.hpp"
 
-#include <iostream>
+namespace fs = std::filesystem;
 
 Book::Book(
 	std::string_view path,
@@ -45,47 +46,64 @@ Book::Book(
 	std::string_view language,
 	std::string_view identifier,
 	std::string publisher,
-	std::vector<std::string> chapters,
+	const std::vector<std::string>& chapters,
+	std::string_view coverFile,
+	std::string_view styleDir,
+	bool stylesheets,
+	std::string_view imgDir,
+	bool images,
 	std::time_t date
-)
+	)
 :
 	path{path.data()},
 	title{title.data()},
 	author{author.data()},
 	language{language.data()},
 	identifier{identifier.data()},
-	date{date},
-	chapters{chapters},
-	manifest{},
-	spine{},
-	navMap{}
+	publisher{publisher.data()},
+	chapters{},
+	cover{Chapter{coverFile, "Cover"}},
+	toc{Chapter{"tableofcontents.xhtml", "Table of Contents"}},
+	stylesheets{},
+	images{},
+	date{date}
 {
-	for (std::string_view chapter : chapters)
+	this->chapters.reserve(chapters.size());
+
+	for (const std::string& chapter : chapters)
 	{
-		this->manifest.push_back(ManifestEntry{chapter});
-		this->spine.push_back(SpineEntry{chapter});
-		this->navMap.push_back(NavPoint{chapter, get_basename(chapter)});
+		this->chapters.emplace_back(this->path + chapter);
 	}
 
-	this->manifest.push_back(ManifestEntry{"toc.ncx"});
+	if (stylesheets)
+	{
+		std::vector<std::string> stylesheets{get_stylesheets(this->path + std::string{styleDir})};
+		this->stylesheets.reserve(stylesheets.size());
+
+		for (std::string_view filename : stylesheets)
+		{
+			this->stylesheets.emplace_back(filename);
+		}
+	}
+
+	if (images)
+	{
+		std::vector<std::string> images{list_dir(this->path + std::string{imgDir})};
+		this->images.reserve(images.size());
+		for (std::string_view filename : images)
+		{
+			this->images.emplace_back(filename);
+		}
+	}
 }
 
-statusCode Book::write(std::string_view filename, bool force)
+statusCode Book::write(std::string_view filename, bool force, bool cover, bool tableOfContents)
 {
-	if (file_exists(filename))
+	fix_play_order(this->chapters, cover, tableOfContents);
+
+	if (fs::exists(this->path + std::string{filename.data()}) && !force)
 	{
-		if (!force)
-		{
-			return OUTFILE_EXISTS;
-		}
-		else
-		{
-			int err{std::remove(filename.data())};
-			if (err)
-			{
-				return COULD_NOT_REMOVE;
-			}
-		}
+		return OUTFILE_EXISTS;
 	}
 
 	libzippp::ZipArchive archive{this->path + std::string{filename.data()}};
@@ -99,22 +117,58 @@ statusCode Book::write(std::string_view filename, bool force)
 
 	archive.addEntry("OEBPS");
 	archive.addEntry("OEBPS/Text");
-	archive.addEntry("OEBPS/Styles");
-	archive.addEntry("OEBPS/Images");
+
 	archive.addEntry("META-INF");
 
 	std::string container{this->generate_container_file()};
 	archive.addData("META-INF/container.xml", container.c_str(), container.length());
 
-	std::string ncx{this->generate_ncx()};
-	archive.addData("OEBPS/toc.ncx", ncx.c_str(), ncx.length());
-
 	std::string opf{this->generate_opf()};
 	archive.addData("OEBPS/content.opf", opf.c_str(), opf.length());
 
-	for (const std::string& chapter : chapters)
+	std::string ncx{this->generate_ncx(cover, tableOfContents)};
+	archive.addData("OEBPS/toc.ncx", ncx.c_str(), ncx.length());
+
+	if (cover)
 	{
-		archive.addFile("OEBPS/Text/" + chapter, chapter);
+		if (fs::exists(this->cover.filepath))
+		{
+			archive.addFile("OEBPS/Text/" + this->cover.filename, this->cover.filepath);
+		}
+		else
+		{
+			std::string cover{this->generate_cover()};
+			archive.addData("OEBPS/Text/cover.xhtml", cover.c_str(), cover.length());
+		}
+	}
+
+	if (tableOfContents)
+	{
+		std::string toc{this->generate_toc(cover)};
+		archive.addData("OEBPS/Text/" + this->toc.filename, toc.c_str(), toc.length());
+	}
+
+	for (const Chapter& chapter : this->chapters)
+	{
+		archive.addFile("OEBPS/Text/" + chapter.filename, chapter.filepath);
+	}
+
+	if (this->stylesheets.size() > 0)
+	{
+		archive.addEntry("OEBPS/Styles");
+		for (const Resource& stylesheet : this->stylesheets)
+		{
+			archive.addFile("OEBPS/Styles/" + stylesheet.filename, stylesheet.filepath);
+		}
+	}
+
+	if (this->images.size() > 0)
+	{
+		archive.addEntry("OEBPS/Images");
+		for (const Resource& image : this->images)
+		{
+			archive.addFile("OEBPS/Images/" + image.filename, image.filepath);
+		}
 	}
 
 	archive.close();
@@ -122,7 +176,7 @@ statusCode Book::write(std::string_view filename, bool force)
 	return NORMAL;
 }
 
-std::string Book::generate_opf()
+std::string Book::generate_opf() const
 {
 	std::stringstream opf{};
 
@@ -135,18 +189,37 @@ std::string Book::generate_opf()
 	<< "\t\t<dc:creator>" << this->author << "</dc:creator>\n"
 	<< "\t\t<dc:publisher>" << this->publisher << "</dc:publisher>\n"
 	<< "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
-	<< "\t</metadata>\n"
-	<< "\t<manifest>\n";
+	<< "\t</metadata>\n\n"
+	<< "\t<manifest>\n\t\t<!-- Chapters -->\n"
+	<< "\t\t" << this->cover.get_manifest_entry() << '\n'
+	<< "\t\t" << this->toc.get_manifest_entry() << '\n';
 
-	for (const ManifestEntry& entry : this->manifest)
+	for (const Chapter& chapter : this->chapters)
 	{
-		opf << "\t\t" << static_cast<std::string>(entry) << '\n';
+		opf << "\t\t" << chapter.get_manifest_entry() << '\n';
 	}
-	opf << "\t</manifest>\n\t<spine toc=\"toc\">\n";
 
-	for (const SpineEntry& entry : this->spine)
+	opf << "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
+	<< "\n\n\t\t<!-- Stylesheets -->\n";
+
+	for (const Resource& stylesheet : this->stylesheets)
 	{
-		opf << "\t\t" << static_cast<std::string>(entry) << '\n';
+		opf << "\t\t" << stylesheet.get_manifest_entry() << '\n';
+	}
+
+	opf << "\n\t\t<!-- Images -->\n";
+	for (const Resource& image : this->images)
+	{
+		opf << "\t\t" << image.get_manifest_entry() << '\n';
+	}
+
+	opf << "\t</manifest>\n\n\t<spine toc=\"toc\">\n"
+	<< "\t\t" << this->cover.get_spine_entry() << '\n'
+	<< "\t\t" << this->toc.get_spine_entry() << '\n';
+
+	for (const Chapter& chapter : this->chapters)
+	{
+		opf << "\t\t" << chapter.get_spine_entry() << '\n';
 	}
 	opf << "\t</spine>\n";
 
@@ -155,7 +228,7 @@ std::string Book::generate_opf()
 	return opf.str();
 }
 
-std::string Book::generate_ncx()
+std::string Book::generate_ncx(bool cover, bool tableOfContents) const
 {
 	std::stringstream ncx{};
 
@@ -168,9 +241,19 @@ std::string Book::generate_ncx()
 	<< "\t</head>\n\t<docTitle><text>" << this->title << "</text></docTitle>\n"
 	<< "\t<navMap>\n";
 
-	for (const NavPoint& point : this->navMap)
+	if (cover)
 	{
-		ncx << "\t\t" << static_cast<std::string>(point) << '\n';
+		ncx << "\t\t" << this->cover.get_navPoint() << '\n';
+	}
+
+	if (tableOfContents)
+	{
+		ncx << "\t\t" << this->toc.get_navPoint() << '\n';
+	}
+
+	for (const Chapter& chapter : this->chapters)
+	{
+		ncx << "\t\t" << chapter.get_navPoint() << '\n';
 	}
 
 	ncx << "\t</navMap>\n</ncx>\n";
@@ -178,7 +261,7 @@ std::string Book::generate_ncx()
 	return ncx.str();
 }
 
-std::string Book::generate_container_file()
+std::string Book::generate_container_file() const
 {
 	std::stringstream container{};
 
@@ -190,5 +273,49 @@ std::string Book::generate_container_file()
 	<< "</container>\n";
 
 	return container.str();
+}
+
+std::string Book::generate_toc(bool cover) const
+{
+	std::stringstream toc{};
+
+	toc << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+	<< "\t<head>\n\t\t<title>Table of Contents</title>\n\t\t"
+	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
+	<< "\t</head>\n\n"
+	<< "\t<body class=\"mainbody\">\n\t\t<div class=\"paragraphtext\">\n"
+	<< "\t\t<h1>Table of Contents</h1>\n\t\t<br/><br/>\n"
+	<< "<h2>" << this->title << "</h2>\n\t\t\t\t"
+	<< "<h3>" << this->author << "</h3>\n\t\t\t<br/><br/>\n\n";
+	if (cover)
+	{
+		toc << "\t\t" << this->cover.get_toc_entry() << "<br/>\n";
+	}
+
+	toc << "\t\t" << this->toc.get_toc_entry() << "<br/>\n";
+
+	for (const Chapter& chapter : this->chapters)
+	{
+		toc << "\t\t\t" << chapter.get_toc_entry() << "<br/>\n";
+	}
+
+	toc << "\t\t</div>\n\t</body>\n</html>\n";
+
+	return toc.str();
+}
+
+std::string Book::generate_cover() const
+{
+	std::stringstream cover{};
+
+	cover << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+	<< "\t<head>\n\t\t<title>" << this->title << "</title>\n"
+	<< "\t\t<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
+	<< "\t</head>\n\n\t<body>\n\t\t<h1>" << this->title << "</h1>\n"
+	<< "\t\t<h2>By " << this->author << "</h2>\n\t</body>\n</html>\n";
+
+	return cover.str();
 }
 

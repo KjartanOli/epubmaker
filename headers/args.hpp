@@ -34,16 +34,23 @@
 		std::string author;
 		std::string title;
 		std::string date;
-		std::string outfile;
+		std::string outfile{"book.epub"};
 		std::string language;
 		std::string identifier;
 		std::string publisher;
 		std::string unknownOption;
 		std::string requires_argument;
 		std::string path;
+		std::string styleDir{"Styles"};
+		std::string imgDir{"Images"};
+		std::string coverFile{"cover.xhtml"};
 		bool help{false};
 		bool version{false};
 		bool force{false};
+		bool stylesheets{true};
+		bool cover{true};
+		bool toc{true};
+		bool images{true};
 	};
 
 	enum argumentValues
@@ -59,6 +66,13 @@
 		VERSION,
 		OUTFILE,
 		FORCE,
+		STYLEDIR,
+		NOSTYLE,
+		IMGDIR,
+		COVER,
+		NOCOVER,
+		NOIMAGES,
+		NOTOC,
 	};
 
 	statusCode parse_args(arguments& args, int argc, char* argv[]);

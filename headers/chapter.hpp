@@ -24,13 +24,38 @@
 	#include <string_view>
 	#include <vector>
 
+	#include "resource.hpp"
+	#include "navPoint.hpp"
+	#include "manifestEntry.hpp"
+	#include "spineEntry.hpp"
+
+	class Chapter : public Resource
+	{
+		private:
+			const std::string title;
+			const SpineEntry spineEntry;
+			NavPoint navPoint;
+
+			std::string get_title();
+		public:
+			Chapter(std::string_view filepath);
+			Chapter(std::string_view filepath, std::string_view title);
+			std::string get_spine_entry() const;
+			std::string get_navPoint() const;
+			std::string get_toc_entry() const;
+
+		// If --no-cover and/or --no-toc are passed the playOrder value of all NavPoints
+		// will be incorrect because NavPoints for those two files have been initialized
+		friend void fix_play_order(std::vector<Chapter>& chapters, bool cover, bool tableOfContents);
+	};
+
+
 	bool is_chapter(std::string_view file);
 	std::string verify_chapter_existance
 	(
 		const std::vector<std::string>& chapters,
 		std::string_view path
 	);
-	std::string read_chapter_order(std::ifstream& order, std::vector<std::string>& chapters);
 	std::string get_title(std::string_view filename);
 
 #endif

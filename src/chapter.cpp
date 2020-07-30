@@ -25,17 +25,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <regex>
+#include <filesystem>
 
 #include "../headers/chapter.hpp"
 #include "../headers/misc.hpp"
 
-#include <iostream>
+namespace fs = std::filesystem;
 
-bool is_chapter(std::string_view filename)
+bool is_chapter(std::string_view filepath)
 {
 	static const std::vector<std::string_view> extensions{"html", "xhtml"};
 
-	std::string_view extension{get_extension(filename)};
+	std::string_view extension{get_extension(filepath)};
 
 	for (std::string_view ext : extensions)
 	{
@@ -53,38 +54,39 @@ std::string verify_chapter_existance(
 	std::string_view path
 )
 {
-	for (std::string_view chapter : chapters)
+	for (const std::string& chapter : chapters)
 	{
-		if (!file_exists(path.data(), chapter.data()))
+		std::string filepath{std::string{path.data()} + chapter};
+		if (!fs::exists(filepath))
 		{
-			return std::string{chapter.data()};
+			return filepath;
 		}
 	}
 
 	return "";
 }
 
-std::string read_chapter_order(std::ifstream& order, std::vector<std::string>& chapters)
-{
-	std::string chapter{};
+Chapter::Chapter(std::string_view filename)
+:
+	Resource{filename},
+	title{this->get_title()},
+	spineEntry{strip_path(filename)},
+	navPoint{filename, this->title}
+{}
 
-	while (order >> chapter)
-	{
-		if (!is_chapter(chapter))
-		{
-			return chapter;
-		}
-		chapters.push_back(chapter);
-	}
+Chapter::Chapter(std::string_view filepath, std::string_view title)
+:
+	Resource{filepath},
+	title{title},
+	spineEntry{strip_path(filepath)},
+	navPoint{filepath, this->title}
+{}
 
-	return "";
-}
-
-std::string get_title(std::string_view filename)
+std::string Chapter::get_title()
 {
 	const static std::regex titleRegex{"(.*)<title>(.+)</title>"};
 
-	std::ifstream chapter{filename.data()};
+	std::ifstream chapter{this->filepath};
 
 	std::string line{};
 	while (chapter)
@@ -96,6 +98,22 @@ std::string get_title(std::string_view filename)
 		}
 	}
 
-	return "";
+	return get_basename(this->filename);
+
+}
+
+std::string Chapter::get_navPoint() const
+{
+	return static_cast<std::string>(this->navPoint);
+}
+
+std::string Chapter::get_spine_entry() const
+{
+	return static_cast<std::string>(this->spineEntry);
+}
+
+std::string Chapter::get_toc_entry() const
+{
+	return "<a href=\"../Text/" + this->filename + "\">" + this->title + "</a>";
 }
 

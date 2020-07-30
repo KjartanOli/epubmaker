@@ -24,18 +24,37 @@
 #include "../headers/misc.hpp"
 #include "../headers/chapter.hpp"
 
-NavPoint::NavPoint(std::string_view source, std::string_view text)
+NavPoint::NavPoint(std::string_view source, std::string_view title)
 : playOrder{NavPoint::s_playOrder++},
-	source{source.data()},
+	source{strip_path(source)},
 	id{get_basename(source)},
-	text{get_title(source)}
+	text{title}
 {}
 
 NavPoint::operator std::string() const
 {
-	return "<navPoint id=\"" + this->id + "\" playOrder=\"" +
+	return "<navPoint id=\"" + this->id + "\" class=\"chapter\" playOrder=\"" +
 		std::to_string(this->playOrder) + "\">\n\t\t\t<navLabel><text>" +
 		this->text + "</text></navLabel>\n\t\t\t<content src=\"Text/" +
 		this->source + "\"/>\n\t\t</navPoint>";
 }
 
+// If --no-cover and/or --no-toc are passed the playOrder value of all NavPoints
+// will be incorrect because NavPoints for those two files have been initialized
+void fix_play_order(std::vector<Chapter>& chapters, bool cover, bool tableOfContents)
+{
+	short modifier{0};
+	if (!(cover && tableOfContents))
+	{
+		modifier = 2;
+	}
+	else if (cover || tableOfContents)
+	{
+		modifier = 1;
+	}
+
+	for (Chapter& chapter : chapters)
+	{
+		chapter.navPoint.playOrder -= modifier;
+	}
+}

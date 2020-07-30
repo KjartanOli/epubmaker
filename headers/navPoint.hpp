@@ -21,7 +21,10 @@
 	#define NAV_POINT_H
 
 	#include <string>
+	#include <vector>
 	#include <string_view>
+
+	class Chapter;
 
 	class NavPoint
 	{
@@ -34,8 +37,12 @@
 			std::string text;
 
 		public:
-			NavPoint(std::string_view source, std::string_view text);
+			NavPoint(std::string_view source, std::string_view title);
 			operator std::string() const;
+
+		// If --no-cover and/or --no-toc are passed the playOrder value of all NavPoints
+		// will be incorrect because NavPoints for those two files have been initialized
+		friend void fix_play_order(std::vector<Chapter>& chapters, bool cover, bool tableOfContents);
 	};
 #endif
 

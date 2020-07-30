@@ -43,8 +43,17 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 		{"-V", VERSION},
 		{"--version", VERSION},
 		{"-o", OUTFILE},
+		{"--output", OUTFILE},
 		{"-f", FORCE},
 		{"--force", FORCE},
+		{"--style-dir", STYLEDIR},
+		{"--no-style", NOSTYLE},
+		{"--cover", COVER},
+		{"-c", COVER},
+		{"--img-dir", IMGDIR},
+		{"--no-cover", NOCOVER},
+		{"--no-images", NOIMAGES},
+		{"--no-toc", NOTOC},
 	};
 
 	for (int i{0}; i < argc; ++i)
@@ -151,6 +160,50 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 
 			case FORCE:
 				args.force = true;
+				break;
+
+			case STYLEDIR:
+				if (!is_argument(argv[i + 1]))
+				{
+					return ARG_REQUIRED;
+				}
+
+				args.styleDir = argv[++i];
+				break;
+
+			case NOSTYLE:
+				args.stylesheets = false;
+				break;
+
+			case IMGDIR:
+				if (!is_argument(argv[i + 1]))
+				{
+					return ARG_REQUIRED;
+				}
+
+				args.imgDir = argv[++i];
+				break;
+
+			case COVER:
+				if (!is_argument(argv[i + 1]))
+				{
+					return ARG_REQUIRED;
+				}
+
+				args.coverFile = argv[++i];
+				break;
+
+			case NOCOVER:
+				args.cover = false;
+				break;
+
+			case NOIMAGES:
+				args.images = false;
+				break;
+
+			case NOTOC:
+				args.toc = false;
+				break;
 		}
 	}
 

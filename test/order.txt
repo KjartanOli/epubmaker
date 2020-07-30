@@ -1,2 +1,2 @@
-chapter01.xhtml
-chapter02.xhtml
+Text/chapter01.xhtml
+Text/chapter02.xhtml

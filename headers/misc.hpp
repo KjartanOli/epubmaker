@@ -24,20 +24,13 @@
 	#include <vector>
 
 	std::string get_extension(std::string_view filename);
-	bool dir_exists(std::string_view path);
-	bool file_exists(std::string_view filename);
-	bool file_exists(const std::string& path, const std::string& filename);
 	std::vector<std::string> split(std::string_view string, const char separator = ' ');
 	std::string get_basename(std::string_view filename);
 	std::string get_mediaType(std::string_view extension);
+	std::string strip_path(std::string_view filename);
+	std::string add_extension(std::string_view filename, std::string_view extension);
+	std::vector<std::string> list_dir(std::string_view dirname);
+	std::vector<std::string> get_stylesheets(std::string_view dirname);
 
-	enum mediaType
-	{
-		XHTML,
-		CSS,
-		JPEG,
-		PNG,
-		NCX,
-	};
 #endif
 
