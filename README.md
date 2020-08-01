@@ -36,6 +36,6 @@ The order.txt file is Epubmaker's way of knowing how to order the chapters of yo
 * Epubmaker does not detect whether an image/stylesheet is used in a chapter or not. It will place all files in the image directory and all files with the .css extension in the style directory into the epub.
 * Epubmaker can detect the title of chapters based on the contents of the \<title> tag of the file as long as it is in the format <title>TITLE</title> on a single line. If it does not detect this pattern in a file Epubmaker will default to using the filename as a title
 * All chapters are placed in OEBPS/Text and other resources are placed in other subdirectories of OEBPS as appropriate for the type of the resource. Meaning img tags or link tags must start their href attribute with ../ to exit Text
-* Even if an alternate directory is specified for either stylesheets or images, Epubmaker will still place the contents of those directories into OEBPS/Images and OEBPS/Style meaning that if img tags or link tags reference other directory names those links will lead to nothing.
+* Even if an alternate directory is specified for either stylesheets or images, Epubmaker will still place the contents of those directories into OEBPS/Images and OEBPS/Styles meaning that if img tags or link tags reference other directory names those links will lead to nothing.
 
 
