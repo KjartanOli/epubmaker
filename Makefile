@@ -20,3 +20,6 @@ test: $(SOURCES:src/%.cpp=obj/%.o) headers/*.hpp
 
 clean:
 	rm epubmaker obj/*
+
+install: build
+	$(CC) $(CFLAGS) -o /usr/local/bin/epubmaker $(wildcard obj/*.o) -lzippp_static -lzip

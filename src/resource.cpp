@@ -1,4 +1,4 @@
-#/*
+/*
  * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-include <string_view>
+#include <string_view>
 
 #include "../headers/resource.hpp"
 #include "../headers/manifestEntry.hpp"

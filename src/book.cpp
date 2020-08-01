@@ -25,7 +25,6 @@
 #include <string_view>
 #include <vector>
 #include <chrono>
-#include <cstdio>
 #include <filesystem>
 
 #include <libzippp/libzippp.h>
@@ -190,7 +189,9 @@ std::string Book::generate_opf() const
 	<< "\t\t<dc:publisher>" << this->publisher << "</dc:publisher>\n"
 	<< "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
 	<< "\t</metadata>\n\n"
-	<< "\t<manifest>\n\t\t<!-- Chapters -->\n"
+	<< "\t<manifest>\n"
+	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
+	<< "\t\t<!-- Chapters -->\n"
 	<< "\t\t" << this->cover.get_manifest_entry() << '\n'
 	<< "\t\t" << this->toc.get_manifest_entry() << '\n';
 
@@ -199,18 +200,22 @@ std::string Book::generate_opf() const
 		opf << "\t\t" << chapter.get_manifest_entry() << '\n';
 	}
 
-	opf << "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
-	<< "\n\n\t\t<!-- Stylesheets -->\n";
-
-	for (const Resource& stylesheet : this->stylesheets)
+	if (this->stylesheets.size() > 0)
 	{
-		opf << "\t\t" << stylesheet.get_manifest_entry() << '\n';
+		opf << "\n\n\t\t<!-- Stylesheets -->\n";
+		for (const Resource& stylesheet : this->stylesheets)
+		{
+			opf << "\t\t" << stylesheet.get_manifest_entry() << '\n';
+		}
 	}
 
-	opf << "\n\t\t<!-- Images -->\n";
-	for (const Resource& image : this->images)
+	if (this->images.size() > 0)
 	{
-		opf << "\t\t" << image.get_manifest_entry() << '\n';
+		opf << "\n\t\t<!-- Images -->\n";
+		for (const Resource& image : this->images)
+		{
+			opf << "\t\t" << image.get_manifest_entry() << '\n';
+		}
 	}
 
 	opf << "\t</manifest>\n\n\t<spine toc=\"toc\">\n"
@@ -279,15 +284,16 @@ std::string Book::generate_toc(bool cover) const
 {
 	std::stringstream toc{};
 
-	toc << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	toc << "\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	<< "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	<< "\t<head>\n\t\t<title>Table of Contents</title>\n\t\t"
 	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
 	<< "\t</head>\n\n"
-	<< "\t<body class=\"mainbody\">\n\t\t<div class=\"paragraphtext\">\n"
-	<< "\t\t<h1>Table of Contents</h1>\n\t\t<br/><br/>\n"
-	<< "<h2>" << this->title << "</h2>\n\t\t\t\t"
-	<< "<h3>" << this->author << "</h3>\n\t\t\t<br/><br/>\n\n";
+	<< "\t<body>\n"
+	<< "\t\t<h1>Table of Contents</h1>\n"
+	<< "\t\t<h2>" << this->title << "</h2>\n"
+	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
 	if (cover)
 	{
 		toc << "\t\t" << this->cover.get_toc_entry() << "<br/>\n";
@@ -297,10 +303,10 @@ std::string Book::generate_toc(bool cover) const
 
 	for (const Chapter& chapter : this->chapters)
 	{
-		toc << "\t\t\t" << chapter.get_toc_entry() << "<br/>\n";
+		toc << "\t\t" << chapter.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t\t</div>\n\t</body>\n</html>\n";
+	toc << "\t</body>\n</html>\n";
 
 	return toc.str();
 }
@@ -309,7 +315,8 @@ std::string Book::generate_cover() const
 {
 	std::stringstream cover{};
 
-	cover << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	cover << "\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	<< "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	<< "\t<head>\n\t\t<title>" << this->title << "</title>\n"
 	<< "\t\t<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
