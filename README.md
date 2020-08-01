@@ -31,7 +31,7 @@ Assuming that the directory DIRNAME contains a file named order.txt this will pr
 The order.txt file is Epubmaker's way of knowing how to order the chapters of your epub. It should contain a list of relative paths to the xhtml files which serve as chapters, one on each line. All of the files present in the order.txt file must exist and have either a .html or .xhtml extension, if either of these conditions is not met, Epubmaker will terminate immediately with no output.
 
 ## Things to note
-* By default Epubmaker will search for stylesheets in DIRNAME/Style and images in DIRNAME/Images unless --style-dir and/or --img-dir are used to change those search paths. If either search directory does not exist Epubmaker will exit with an error unless --no-style and/or --no-images is passed.
+* By default Epubmaker will search for stylesheets in DIRNAME/Styles and images in DIRNAME/Images unless --style-dir and/or --img-dir are used to change those search paths. If either search directory does not exist Epubmaker will exit with an error unless --no-style and/or --no-images is passed.
 * Epubmaker will not search subdirectories for stylesheets or images
 * Epubmaker does not detect whether an image/stylesheet is used in a chapter or not. It will place all files in the image directory and all files with the .css extension in the style directory into the epub.
 * Epubmaker can detect the title of chapters based on the contents of the \<title> tag of the file as long as it is in the format <title>TITLE</title> on a single line. If it does not detect this pattern in a file Epubmaker will default to using the filename as a title
