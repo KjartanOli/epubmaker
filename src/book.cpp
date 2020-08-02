@@ -36,6 +36,8 @@
 #include "../headers/misc.hpp"
 #include "../headers/status.hpp"
 
+#include <iostream>
+
 namespace fs = std::filesystem;
 
 Book::Book(
@@ -62,7 +64,7 @@ Book::Book(
 	publisher{publisher.data()},
 	chapters{},
 	cover{Chapter{coverFile, "Cover"}},
-	toc{Chapter{"tableofcontents.xhtml", "Table of Contents"}},
+	toc{Chapter{this->path + "tableofcontents.xhtml", "Table of Contents"}},
 	stylesheets{},
 	images{},
 	date{date}
@@ -136,15 +138,15 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 		}
 		else
 		{
-			std::string cover{this->generate_cover()};
-			archive.addData("OEBPS/Text/cover.xhtml", cover.c_str(), cover.length());
+			this->generate_cover();
+			archive.addFile("OEBPS/Text/" + this->cover.filename, this->path + this->cover.filename);
 		}
 	}
 
 	if (tableOfContents)
 	{
-		std::string toc{this->generate_toc(cover)};
-		archive.addData("OEBPS/Text/" + this->toc.filename, toc.c_str(), toc.length());
+		this->generate_toc(cover);
+		archive.addFile("OEBPS/Text/" + this->toc.filename, this->toc.filepath);
 	}
 
 	for (const Chapter& chapter : this->chapters)
@@ -280,12 +282,11 @@ std::string Book::generate_container_file() const
 	return container.str();
 }
 
-std::string Book::generate_toc(bool cover) const
+void Book::generate_toc(bool cover) const
 {
-	std::stringstream toc{};
+	std::ofstream toc{this->toc.filepath};
 
-	toc << "\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
-	<< "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	toc << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	<< "\t<head>\n\t\t<title>Table of Contents</title>\n\t\t"
 	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
@@ -307,22 +308,17 @@ std::string Book::generate_toc(bool cover) const
 	}
 
 	toc << "\t</body>\n</html>\n";
-
-	return toc.str();
 }
 
-std::string Book::generate_cover() const
+void Book::generate_cover() const
 {
-	std::stringstream cover{};
+	std::ofstream cover{this->path + this->cover.filename};
 
-	cover << "\n<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
-	<< "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
+	cover << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
 	<< "\t<head>\n\t\t<title>" << this->title << "</title>\n"
 	<< "\t\t<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
 	<< "\t</head>\n\n\t<body>\n\t\t<h1>" << this->title << "</h1>\n"
 	<< "\t\t<h2>By " << this->author << "</h2>\n\t</body>\n</html>\n";
-
-	return cover.str();
 }
 

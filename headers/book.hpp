@@ -50,8 +50,8 @@
 			std::string generate_opf() const;
 			std::string generate_ncx(bool cover, bool tableOfContents) const;
 			std::string generate_container_file() const;
-			std::string generate_toc(bool cover) const;
-			std::string generate_cover() const;
+			void  generate_toc(bool cover) const;
+			void generate_cover() const;
 
 		public:
 			Book(

@@ -4,3 +4,5 @@ epubmaker
 TODO.txt
 test/*.epub
 *.swp
+test/tableofcontents.xhtml
+test/cover.xhtml

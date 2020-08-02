@@ -3,8 +3,9 @@ CFLAGS=-std=c++20 -Wall -Wpedantic -Wextra
 
 SOURCES=$(wildcard src/*.cpp)
 
-.PHONY: clean
+.PHONY: clean uninstall
 
+build: CFLAGS:=$(CFLAGS) -O3
 build: $(SOURCES:src/%.cpp=obj/%.o) headers/*.hpp
 	$(CC) $(CFLAGS) -o epubmaker $(wildcard obj/*.o) -lzippp_static -lzip
 
@@ -20,6 +21,9 @@ test: $(SOURCES:src/%.cpp=obj/%.o) headers/*.hpp
 
 clean:
 	rm epubmaker obj/*
+
+uninstall:
+	rm /usr/local/bin/epubmaker
 
 install: build
 	$(CC) $(CFLAGS) -o /usr/local/bin/epubmaker $(wildcard obj/*.o) -lzippp_static -lzip
