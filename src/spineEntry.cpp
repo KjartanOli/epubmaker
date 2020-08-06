@@ -24,7 +24,7 @@
 #include "../headers/misc.hpp"
 
 SpineEntry::SpineEntry(std::string_view filename, bool primary)
-: idref{get_basename(filename)}, primary{primary}
+: idref{filename}, primary{primary}
 {}
 
 SpineEntry::operator std::string() const

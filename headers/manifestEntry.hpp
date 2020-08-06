@@ -27,8 +27,8 @@
 	{
 		private:
 			std::string href;
-			std::string id;
 			std::string mediaType;
+			std::string id;
 
 		public:
 			ManifestEntry(std::string_view filename);

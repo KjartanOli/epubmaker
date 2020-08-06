@@ -27,7 +27,7 @@
 NavPoint::NavPoint(std::string_view source, std::string_view title)
 : playOrder{NavPoint::s_playOrder++},
 	source{strip_path(source)},
-	id{get_basename(source)},
+	id{strip_path(source)},
 	text{title}
 {}
 
@@ -43,15 +43,7 @@ NavPoint::operator std::string() const
 // will be incorrect because NavPoints for those two files have been initialized
 void fix_play_order(std::vector<Chapter>& chapters, bool cover, bool tableOfContents)
 {
-	short modifier{0};
-	if (!(cover && tableOfContents))
-	{
-		modifier = 2;
-	}
-	else if (cover || tableOfContents)
-	{
-		modifier = 1;
-	}
+	int modifier{2 - cover - tableOfContents};
 
 	for (Chapter& chapter : chapters)
 	{

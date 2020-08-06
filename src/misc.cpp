@@ -150,7 +150,7 @@ void version()
 {
 	static const short major{1};
 	static const short minor{1};
-	static const short hotfix{2};
+	static const short hotfix{3};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"

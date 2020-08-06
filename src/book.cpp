@@ -192,7 +192,7 @@ std::string Book::generate_opf() const
 	<< "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
 	<< "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
-	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
+	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>\n\n"
 	<< "\t\t<!-- Chapters -->\n"
 	<< "\t\t" << this->cover.get_manifest_entry() << '\n'
 	<< "\t\t" << this->toc.get_manifest_entry() << '\n';
@@ -294,20 +294,20 @@ void Book::generate_toc(bool cover) const
 	<< "\t<body>\n"
 	<< "\t\t<h1>Table of Contents</h1>\n"
 	<< "\t\t<h2>" << this->title << "</h2>\n"
-	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
+	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<div>\n\n";
 	if (cover)
 	{
-		toc << "\t\t" << this->cover.get_toc_entry() << "<br/>\n";
+		toc << "\t\t\t" << this->cover.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t\t" << this->toc.get_toc_entry() << "<br/>\n";
+	toc << "\t\t\t" << this->toc.get_toc_entry() << "<br/>\n";
 
 	for (const Chapter& chapter : this->chapters)
 	{
-		toc << "\t\t" << chapter.get_toc_entry() << "<br/>\n";
+		toc << "\t\t\t" << chapter.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t</body>\n</html>\n";
+	toc << "\t\t</div>\n\t</body>\n</html>\n";
 }
 
 void Book::generate_cover() const

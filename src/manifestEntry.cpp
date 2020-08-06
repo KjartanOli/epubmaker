@@ -28,8 +28,8 @@
 
 ManifestEntry::ManifestEntry(std::string_view filename)
 :
-	id{get_basename(filename)},
-	mediaType{get_mediaType(get_extension(filename))}
+	mediaType{get_mediaType(get_extension(filename))},
+	id{filename}
 {
 	static std::map<std::string, resourceType> resourceTypeMap
 	{
