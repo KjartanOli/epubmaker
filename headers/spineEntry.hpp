@@ -21,7 +21,8 @@
 	#define SPINE_ENTRY_H
 
 	#include <string>
-	#include <string_view>
+
+	#include "fs.hpp"
 
 	class SpineEntry
 	{
@@ -30,7 +31,7 @@
 			bool primary;
 
 		public:
-			SpineEntry(std::string_view filename, bool primary = true);
+			SpineEntry(const fs::path& file, bool primary = true);
 			operator std::string() const;
 	};
 #endif

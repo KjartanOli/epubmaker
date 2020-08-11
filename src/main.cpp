@@ -21,10 +21,7 @@
 #include <string>
 #include <string_view>
 #include <fstream>
-#include <unistd.h>
-#include <map>
 #include <iostream>
-#include <filesystem>
 
 #include "../headers/filter.hpp"
 #include "../headers/chapter.hpp"
@@ -36,14 +33,14 @@
 #include "../headers/navPoint.hpp"
 #include "../headers/book.hpp"
 #include "../headers/order.hpp"
+#include "../headers/defaults.hpp"
+#include "../headers/fs.hpp"
 
 const std::string_view orderFile{"order.txt"};
 const short minArgs{2};
 
 void help(std::ostream& out = std::cerr);
 void version();
-
-namespace fs = std::filesystem;
 
 int main(int argc, char** argv)
 {
@@ -54,6 +51,7 @@ int main(int argc, char** argv)
 	}
 
 	arguments args{};
+
 	switch (parse_args(args, argc - 1, argv+1))
 	{
 		case INVALID_OPTION:
@@ -62,7 +60,7 @@ int main(int argc, char** argv)
 			return INVALID_OPTION;
 
 		case ARG_REQUIRED:
-			std::cerr << "Option " << args.requires_argument << " requires an argument\n";
+			std::cerr << "Option " << args.requiresArgument << " requires an argument\n";
 			help();
 			return ARG_REQUIRED;
 
@@ -85,48 +83,92 @@ int main(int argc, char** argv)
 
 	if (!fs::exists(args.path))
 	{
-		std::cerr << "Directory " << args.path << " Does not exist\n";
+		std::cerr << "Directory " << args.path << " Does not exist\n\n";
+		help();
 		return DIR_DOES_NOT_EXIST;
 	}
 
-	if (!fs::exists(fs::path{args.path + std::string{orderFile.data()}}))
+	if (!fs::exists(fs::path{args.path / std::string{orderFile.data()}}))
 	{
-		std::cerr << "Directory " << args.path << " Does not contain a " << orderFile << " file\n";
+		std::cerr << "Directory " << args.path << " Does not contain a " << orderFile << " file\n\n";
+
+		help();
 		return NO_ORDER_FILE;
 	}
 
-	std::ifstream order{args.path + std::string{orderFile.data()}};
+	std::ifstream order{args.path / orderFile};
 	std::vector<std::string> chapters{};
 
 	if (std::string chapter{read_chapter_order(order, chapters)}; chapter != "")
 	{
-		std::cerr << "Invalid extension for chapter: " << chapter << " in " << args.path <<  orderFile << '\n'
-		<< "Please make sure that it only contains .html and/or .xhtml files\n";
+		std::cerr << "Invalid extension for chapter: " << chapter << " in " << args.path / orderFile << '\n'
+		<< "Please make sure that it only contains .html and/or .xhtml files\n\n";
 
+		help();
 		return INVALID_CHAPTER_FILE;
 	}
 
 	if (std::string chapter{verify_chapter_existance(chapters, args.path)}; chapter != "")
 	{
-			std::cerr << "Chapter " << chapter << " in " <<  args.path << orderFile << " does not exist\n";
-			return CHAPTER_DOES_NOT_EXIST;
+		std::cerr << "Chapter " << chapter << " in " <<  args.path / orderFile << " does not exist\n\n";
+
+		help();
+		return CHAPTER_DOES_NOT_EXIST;
+	}
+
+	// Error if --no-style and a custom styledir are both specified
+	if (!args.stylesheets && (args.styleDir != defaults::styledir))
+	{
+		std::cerr << "Incompatable options --no-style and --style-dir " << args.styleDir << "\n\n";
+
+		help();
+		return INCOMPATABLE_OPTIONS;
+	}
+
+	// Error if --no-images and a custom imgdir are both specified
+	if (!args.images && (args.imgDir != defaults::imagedir))
+	{
+		std::cerr << "Incompatable options --no-images and --img-dir " << args.imgDir << "\n\n";
+
+		help();
+		return INCOMPATABLE_OPTIONS;
 	}
 
 	if (args.stylesheets)
 	{
-		if (!fs::exists(args.path + args.styleDir))
+		if (!fs::exists(args.path / args.styleDir))
 		{
-			std::cerr << args.path << " does not contain a directory " << args.styleDir << '\n';
-			return STYLEDIR_DOES_NOT_EXIST;
+			// Only error if a custom styledir was specifed else just asume --no-style
+			if (args.styleDir != defaults::styledir)
+			{
+				std::cerr << args.path << " does not contain a directory " << args.styleDir << "\n\n";
+
+				help();
+				return STYLEDIR_DOES_NOT_EXIST;
+			}
+			else
+			{
+				args.stylesheets = false;
+			}
 		}
 	}
 
 	if (args.images)
 	{
-		 if (!fs::exists(args.path + args.imgDir))
+		 if (!fs::exists(args.path / args.imgDir))
 		 {
-		 	std::cerr << args.path << " does not contain a directory " << args.imgDir << '\n';
-			return IMGDIR_DOES_NOT_EXIST;
+			// Only error if a custom imgdir was specifed else just asume --no-images
+		 	if (args.imgDir != defaults::imagedir)
+			{
+				std::cerr << args.path << " does not contain a directory " << args.imgDir << "\n\n";
+
+				help();
+				return IMGDIR_DOES_NOT_EXIST;
+			}
+			else
+			{
+				args.images = false;
+			}
 		 }
 	}
 
@@ -138,6 +180,7 @@ int main(int argc, char** argv)
 		args.language,
 		args.identifier,
 		args.publisher,
+		args.description,
 		chapters,
 		args.coverFile,
 		args.styleDir,
@@ -151,16 +194,25 @@ int main(int argc, char** argv)
 	switch (status)
 	{
 		case OUTFILE_EXISTS:
-			std::cerr << "Target file " << args.path << args.outfile << " already exists and --force was not specified\n";
+			std::cerr << "Target file " << args.path << args.outfile << " already exists and --force was not specified\n\n";
+
+			help();
 			return OUTFILE_EXISTS;
 
-			case NORMAL:
+		case COULD_NOT_OPEN:
+			std::cerr << "Could not open file " << args.path / args.outfile << " for writing\n";
+			help();
+			return COULD_NOT_OPEN;
+
+		case NORMAL:
 			return NORMAL;
 			break;
 
 		default:
 			// This path should never be executed but not having it would cause a warning.
-			std::cerr << "Unknown error\n";
+			std::cerr << "Unknown error\n\n";
+
+			help();
 			return UNKOWN_ERROR;
 	}
 
@@ -181,6 +233,7 @@ void help(std::ostream& out)
 	<< indent << indent << "-a, --author=AUTHOR              Set the author of the document\n"
 	<< indent << indent << "-t, --title=TITLE                Set the title of the document\n"
 	<< indent << indent << "-d, --date=DATE                  Set the publication date, if this argument is skipped the current date and time are used\n"
+	<< indent << indent << "    --description=DESCRIPTION    Set the description of the document\n"
 	<< indent << indent << "-i, --identifier=IDENTIFIER      Set the identifier of the document\n"
 	<< indent << indent << "-l, --language=LANGUAGE          Set the language of the document\n"
 	<< indent << indent << "-p, --publisher=PUBLISHER        Set the publisher of the document\n"
@@ -212,6 +265,7 @@ void help(std::ostream& out)
 	<< indent << DIR_DOES_NOT_EXIST << "\tThe target directory does not exist\n"
 	<< indent << NO_ORDER_FILE << "\tNo " << orderFile << " was found in the target directory\n"
 	<< indent << INVALID_OPTION << "\tAn unrecognised option was passed\n"
+	<< indent << INCOMPATABLE_OPTIONS << "\tTwo or more options that are incompatable were passed\n"
 	<< indent << ARG_REQUIRED << "\tAn option that requires an argument was not passed one\n"
 	<< indent << INVALID_CHAPTER_FILE << "\tA file listed in " << orderFile << " does not have a valid extension\n"
 	<< indent << CHAPTER_DOES_NOT_EXIST << "\tA file listed in " << orderFile << " does not exist\n"

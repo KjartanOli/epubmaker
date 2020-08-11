@@ -21,7 +21,8 @@
 	#define MANIFEST_ENTRY_H
 
 	#include <string>
-	#include <string_view>
+
+	#include "fs.hpp"
 
 	class ManifestEntry
 	{
@@ -31,7 +32,7 @@
 			std::string mediaType;
 
 		public:
-			ManifestEntry(std::string_view filename);
+			ManifestEntry(const fs::path& filename);
 			operator std::string() const;
 	};
 #endif

@@ -4,5 +4,6 @@ epubmaker
 TODO.txt
 test/*.epub
 *.swp
+tmp.cpp
 test/tableofcontents.xhtml
 test/cover.xhtml

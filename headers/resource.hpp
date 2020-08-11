@@ -21,21 +21,21 @@
 	#define RESOURCE_H
 
 	#include <string>
-	#include <string_view>
 
 	#include "manifestEntry.hpp"
+	#include "fs.hpp"
 
 	class Resource
 	{
 		public:
-			const std::string filepath;
+			const fs::path filepath;
 			const std::string filename;
 
 		protected:
 			const ManifestEntry manifestEntry;
 
 		public:
-			Resource(std::string_view filepath);
+			Resource(const fs::path& filepath);
 			std::string get_manifest_entry() const;
 
 	};

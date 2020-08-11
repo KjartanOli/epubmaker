@@ -28,6 +28,7 @@
 	#include "navPoint.hpp"
 	#include "manifestEntry.hpp"
 	#include "spineEntry.hpp"
+	#include "fs.hpp"
 
 	class Chapter : public Resource
 	{
@@ -38,8 +39,8 @@
 
 			std::string get_title();
 		public:
-			Chapter(std::string_view filepath);
-			Chapter(std::string_view filepath, std::string_view title);
+			Chapter(const fs::path& filepath);
+			Chapter(const fs::path& filepath, std::string_view title);
 			std::string get_spine_entry() const;
 			std::string get_navPoint() const;
 			std::string get_toc_entry() const;
@@ -50,11 +51,11 @@
 	};
 
 
-	bool is_chapter(std::string_view file);
+	bool is_chapter(const fs::path& path);
 	std::string verify_chapter_existance
 	(
-		const std::vector<std::string>& chapters,
-		std::string_view path
+		std::vector<std::string>& chapters,
+		const fs::path& path
 	);
 	std::string get_title(std::string_view filename);
 
