@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <deque>
+#include <filesystem>
 #include <fstream>
 
 #include <libzippp/libzippp.h>
+#include <string_view>
 
 #include "../headers/book.hpp"
 #include "../headers/misc.hpp"
@@ -36,9 +39,9 @@ Book::Book(
 	std::string_view description,
 	const std::vector<std::string>& chapters,
 	std::string_view coverFile,
-	std::string_view styleDir,
+	const std::deque<std::string>& styleDirs,
 	bool stylesheets,
-	std::string_view imgDir,
+	const std::deque<std::string>& imgDirs,
 	bool images,
 	std::time_t date
 	)
@@ -66,22 +69,28 @@ Book::Book(
 
 	if (stylesheets)
 	{
-		std::vector<fs::path> stylesheets{get_stylesheets(this->path / styleDir)};
-		this->stylesheets.reserve(stylesheets.size());
-
-		for (const fs::path& filename : stylesheets)
+		for (fs::path styledir : styleDirs)
 		{
-			this->stylesheets.emplace_back(filename);
+			std::vector<fs::path> stylesheets{get_stylesheets((styledir.is_absolute()) ? styledir : this->path / styledir)};
+			this->stylesheets.reserve(stylesheets.size());
+
+			for (const fs::path& filename : stylesheets)
+			{
+				this->stylesheets.emplace_back(filename);
+			}
 		}
 	}
 
 	if (images)
 	{
-		std::vector<fs::path> images{list_dir(this->path / imgDir)};
-		this->images.reserve(images.size());
-		for (const fs::path& filename : images)
+		for (fs::path imgDir : imgDirs)
 		{
-			this->images.emplace_back(filename);
+			std::vector<fs::path> images{list_dir((imgDir.is_absolute()) ? imgDir : this->path / imgDir)};
+			this->images.reserve(images.size());
+			for (const fs::path& filename : images)
+			{
+				this->images.emplace_back(filename);
+			}
 		}
 	}
 }
@@ -194,9 +203,9 @@ std::string Book::generate_opf() const
 	}
 	if (this->description != "")
 	{
-		 opf << "\t\t<dc:description>" << this->description << "</dc:description>\n";
+		opf << "\t\t<dc:description>" << this->description << "</dc:description>\n";
 	}
-	opf << "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
+	opf << "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%F") << "</dc:date>\n"
 	<< "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
@@ -299,22 +308,23 @@ void Book::generate_toc(bool cover) const
 	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
 	<< "\t</head>\n\n"
 	<< "\t<body>\n"
-	<< "\t\t<h1>Table of Contents</h1>\n"
-	<< "\t\t<h2>" << this->title << "</h2>\n"
-	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
+	<< "\t\t<div>\n"
+	<< "\t\t\t<h1>Table of Contents</h1>\n"
+	<< "\t\t\t<h2>" << this->title << "</h2>\n"
+	<< "\t\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
 	if (cover)
 	{
-		toc << "\t\t" << this->cover.get_toc_entry() << "<br/>\n";
+		toc << "\t\t\t" << this->cover.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t\t" << this->toc.get_toc_entry() << "<br/>\n";
+	toc << "\t\t\t" << this->toc.get_toc_entry() << "<br/>\n";
 
 	for (const Chapter& chapter : this->chapters)
 	{
-		toc << "\t\t" << chapter.get_toc_entry() << "<br/>\n";
+		toc << "\t\t\t" << chapter.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t</body>\n</html>\n";
+	toc << "\t\t</div>\n\t</body>\n</html>\n";
 }
 
 void Book::generate_cover() const

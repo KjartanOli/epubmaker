@@ -23,8 +23,8 @@
 	#include <string_view>
 	namespace defaults
 	{
-		extern std::string_view styledir;
-		extern std::string_view imagedir;
+		extern std::string_view styleDir;
+		extern std::string_view imgDir;
 		extern std::string_view coverfile;
 		extern std::string_view outfile;
 	}

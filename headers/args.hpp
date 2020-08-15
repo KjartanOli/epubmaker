@@ -20,9 +20,10 @@
 #ifndef ARGS_H
 	#define ARGS_H
 
+	#include <deque>
 	#include <string_view>
 	#include <string>
-	#include <vector>
+	#include <queue>
 
 	#include "status.hpp"
 	#include "defaults.hpp"
@@ -32,17 +33,17 @@
 	{
 		std::string author;
 		std::string title;
-		std::string date;
 		std::string outfile{defaults::outfile};
 		std::string language;
 		std::string identifier;
 		std::string publisher;
+		std::string date;
 		std::string unknownOption;
 		std::string requiresArgument;
 		std::string description;
 		fs::path path;
-		std::string styleDir{defaults::styledir};
-		std::string imgDir{defaults::imagedir};
+		std::deque<std::string> styleDirs{std::string{defaults::styleDir}};
+		std::deque<std::string> imgDirs{std::string{defaults::imgDir}};
 		std::string coverFile{defaults::coverfile};
 
 		bool help{false};

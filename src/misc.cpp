@@ -41,6 +41,7 @@ std::string get_extension(std::string_view filename)
 	}
 	return "";
 }
+
 std::vector<std::string> split(std::string_view string, const char separator)
 {
 	std::vector<std::string> results{};
@@ -67,12 +68,12 @@ std::string get_mediaType(std::string_view extension)
 {
 	static std::map<std::string_view, mediaType> mediaTypeMap
 	{
-		{"html", XHTML},
-		{"xhtml", XHTML},
-		{"png", PNG},
-		{"css", CSS},
-		{"jpg", JPEG},
-		{"ncx", NCX},
+		{".html", XHTML},
+		{".xhtml", XHTML},
+		{".png", PNG},
+		{".css", CSS},
+		{".jpg", JPEG},
+		{".ncx", NCX},
 	};
 
 	switch (mediaTypeMap[extension])
@@ -126,14 +127,14 @@ std::vector<fs::path> list_dir(const fs::path& dirname)
 
 std::vector<fs::path> get_stylesheets(const fs::path& dirname)
 {
-	return filter<fs::path>(list_dir(dirname), [](const fs::path& file){return file.extension() == "css";});
+	return filter<fs::path>(list_dir(dirname), [](const fs::path& file){return file.extension() == ".css";});
 }
 
 void version()
 {
 	static const short major{1};
-	static const short minor{1};
-	static const short hotfix{2};
+	static const short minor{2};
+	static const short hotfix{0};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"

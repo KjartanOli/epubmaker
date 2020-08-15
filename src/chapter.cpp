@@ -44,18 +44,36 @@ bool is_chapter(const fs::path& filepath)
 
 	return false;
 }
-#include <iostream>
+
 std::string verify_chapter_existance(
 	std::vector<std::string>& chapters,
 	const fs::path& path
 )
 {
-	for (std::string& chapter : chapters)
+	for (fs::path chapter : chapters)
 	{
-		fs::path filepath{path / chapter};
-		if (!fs::exists(filepath))
+		// check if the chapter has a parent path or is just a filename
+		bool parentPath{chapter.has_parent_path()};
+
+		if (!chapter.is_absolute())
 		{
-			return filepath;
+			chapter = path / chapter;
+		}
+
+		if (!fs::exists(chapter))
+		{
+			if (!parentPath)
+			{
+				chapter = chapter.parent_path() / "Text" / chapter.filename();
+				if (!fs::exists(chapter))
+				{
+					return chapter.filename();
+				}
+			}
+			else
+			{
+				return chapter;
+			}
 		}
 	}
 
