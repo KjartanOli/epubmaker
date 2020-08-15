@@ -9,10 +9,10 @@ build: CFLAGS:=$(CFLAGS) -O3
 build: $(SOURCES:src/%.cpp=obj/%.o) headers/*.hpp
 	$(CC) $(CFLAGS) -o epubmaker $(wildcard obj/*.o) -lzippp_static -lzip
 
-obj/%.o: src/%.cpp headers/%.hpp
+obj/%.o: src/%.cpp headers/%.hpp headers/fs.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-obj/main.o: src/main.cpp
+obj/main.o: src/main.cpp headers/fs.hpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test: CFLAGS:=$(CFLAGS) -g -Werror
@@ -27,3 +27,4 @@ uninstall:
 
 install: build
 	$(CC) $(CFLAGS) -o /usr/local/bin/epubmaker $(wildcard obj/*.o) -lzippp_static -lzip
+

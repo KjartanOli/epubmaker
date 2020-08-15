@@ -22,11 +22,12 @@
 #include "../headers/resource.hpp"
 #include "../headers/manifestEntry.hpp"
 #include "../headers/misc.hpp"
+#include "../headers/fs.hpp"
 
-Resource::Resource(std::string_view filepath)
+Resource::Resource(const fs::path& filepath)
 :
 	filepath{filepath},
-	filename{strip_path(filepath)},
+	filename{filepath.filename()},
 	manifestEntry{ManifestEntry{this->filename}}
 {}
 

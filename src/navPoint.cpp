@@ -18,16 +18,17 @@
  */
 
 #include <string>
-#include <string_view>
 
 #include "../headers/navPoint.hpp"
 #include "../headers/misc.hpp"
 #include "../headers/chapter.hpp"
+#include "../headers/fs.hpp"
 
-NavPoint::NavPoint(std::string_view source, std::string_view title)
+
+NavPoint::NavPoint(const fs::path& filepath, std::string_view title)
 : playOrder{NavPoint::s_playOrder++},
-	source{strip_path(source)},
-	id{strip_path(source)},
+	source{filepath.filename().c_str()},
+	id{filepath.stem()},
 	text{title}
 {}
 

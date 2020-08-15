@@ -17,54 +17,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ctime>
-#include <fstream>
-#include <iomanip>
-#include <sstream>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <chrono>
+#include <deque>
 #include <filesystem>
+#include <fstream>
 
 #include <libzippp/libzippp.h>
+#include <string_view>
 
 #include "../headers/book.hpp"
-#include "../headers/manifestEntry.hpp"
-#include "../headers/spineEntry.hpp"
-#include "../headers/navPoint.hpp"
 #include "../headers/misc.hpp"
 #include "../headers/status.hpp"
-
-#include <iostream>
-
-namespace fs = std::filesystem;
+#include "../headers/fs.hpp"
 
 Book::Book(
-	std::string_view path,
+	const fs::path& path,
 	std::string_view title,
 	std::string_view author,
 	std::string_view language,
 	std::string_view identifier,
-	std::string publisher,
+	std::string_view publisher,
+	std::string_view description,
 	const std::vector<std::string>& chapters,
 	std::string_view coverFile,
-	std::string_view styleDir,
+	const std::deque<std::string>& styleDirs,
 	bool stylesheets,
-	std::string_view imgDir,
+	const std::deque<std::string>& imgDirs,
 	bool images,
 	std::time_t date
 	)
 :
-	path{path.data()},
+	path{path},
 	title{title.data()},
 	author{author.data()},
 	language{language.data()},
 	identifier{identifier.data()},
 	publisher{publisher.data()},
+	description{description.data()},
 	chapters{},
 	cover{Chapter{coverFile, "Cover"}},
-	toc{Chapter{this->path + "tableofcontents.xhtml", "Table of Contents"}},
+	toc{Chapter{this->path / "tableofcontents.xhtml", "Table of Contents"}},
 	stylesheets{},
 	images{},
 	date{date}
@@ -73,27 +64,33 @@ Book::Book(
 
 	for (const std::string& chapter : chapters)
 	{
-		this->chapters.emplace_back(this->path + chapter);
+		this->chapters.emplace_back(this->path / chapter);
 	}
 
 	if (stylesheets)
 	{
-		std::vector<std::string> stylesheets{get_stylesheets(this->path + std::string{styleDir})};
-		this->stylesheets.reserve(stylesheets.size());
-
-		for (std::string_view filename : stylesheets)
+		for (fs::path styledir : styleDirs)
 		{
-			this->stylesheets.emplace_back(filename);
+			std::vector<fs::path> stylesheets{get_stylesheets((styledir.is_absolute()) ? styledir : this->path / styledir)};
+			this->stylesheets.reserve(stylesheets.size());
+
+			for (const fs::path& filename : stylesheets)
+			{
+				this->stylesheets.emplace_back(filename);
+			}
 		}
 	}
 
 	if (images)
 	{
-		std::vector<std::string> images{list_dir(this->path + std::string{imgDir})};
-		this->images.reserve(images.size());
-		for (std::string_view filename : images)
+		for (fs::path imgDir : imgDirs)
 		{
-			this->images.emplace_back(filename);
+			std::vector<fs::path> images{list_dir((imgDir.is_absolute()) ? imgDir : this->path / imgDir)};
+			this->images.reserve(images.size());
+			for (const fs::path& filename : images)
+			{
+				this->images.emplace_back(filename);
+			}
 		}
 	}
 }
@@ -102,12 +99,12 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 {
 	fix_play_order(this->chapters, cover, tableOfContents);
 
-	if (fs::exists(this->path + std::string{filename.data()}) && !force)
+	if (fs::exists(this->path / filename) && !force)
 	{
 		return OUTFILE_EXISTS;
 	}
 
-	libzippp::ZipArchive archive{this->path + std::string{filename.data()}};
+	libzippp::ZipArchive archive{(this->path / filename).c_str()};
 	if (!archive.open(force ? libzippp::ZipArchive::NEW : libzippp::ZipArchive::WRITE))
 	{
 		return COULD_NOT_OPEN;
@@ -139,7 +136,7 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 		else
 		{
 			this->generate_cover();
-			archive.addFile("OEBPS/Text/" + this->cover.filename, this->path + this->cover.filename);
+			archive.addFile("OEBPS/Text/" + this->cover.filename, this->path / this->cover.filename);
 		}
 	}
 
@@ -183,13 +180,32 @@ std::string Book::generate_opf() const
 
 	opf << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\n"
 	<< "<package xmlns=\"http://www.idpf.org/2007/opf\" unique-identifier=\"uuid_id\" version=\"2.0\">\n"
-	<< "\t<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:opf=\"http://www.idpf.org/2007/opf\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n"
-	<< "\t\t<dc:title>" << this->title << "</dc:title>\n"
-	<< "\t\t<dc:language>" << this->language << "</dc:language>\n"
-	<< "\t\t<dc:identifier id=\"uuid_id\">" << this->identifier << "</dc:identifier>\n"
-	<< "\t\t<dc:creator>" << this->author << "</dc:creator>\n"
-	<< "\t\t<dc:publisher>" << this->publisher << "</dc:publisher>\n"
-	<< "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
+	<< "\t<metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:opf=\"http://www.idpf.org/2007/opf\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n";
+	if (this->title != "")
+	{
+		opf << "\t\t<dc:title>" << this->title << "</dc:title>\n";
+	}
+	if (this->language != "")
+	{
+		opf << "\t\t<dc:language>" << this->language << "</dc:language>\n";
+	}
+	if (this->identifier != "")
+	{
+		opf << "\t\t<dc:identifier id=\"uuid_id\">" << this->identifier << "</dc:identifier>\n";
+	}
+	if (this->author != "")
+	{
+		opf << "\t\t<dc:creator>" << this->author << "</dc:creator>\n";
+	}
+	if (this->publisher != "")
+	{
+		opf << "\t\t<dc:publisher>" << this->publisher << "</dc:publisher>\n";
+	}
+	if (this->description != "")
+	{
+		opf << "\t\t<dc:description>" << this->description << "</dc:description>\n";
+	}
+	opf << "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%F") << "</dc:date>\n"
 	<< "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>\n\n"
@@ -250,17 +266,17 @@ std::string Book::generate_ncx(bool cover, bool tableOfContents) const
 
 	if (cover)
 	{
-		ncx << "\t\t" << this->cover.get_navPoint() << '\n';
+		ncx << "\t\t" << this->cover.get_navPoint() << "\n\n";
 	}
 
 	if (tableOfContents)
 	{
-		ncx << "\t\t" << this->toc.get_navPoint() << '\n';
+		ncx << "\t\t" << this->toc.get_navPoint() << "\n\n";
 	}
 
 	for (const Chapter& chapter : this->chapters)
 	{
-		ncx << "\t\t" << chapter.get_navPoint() << '\n';
+		ncx << "\t\t" << chapter.get_navPoint() << "\n\n";
 	}
 
 	ncx << "\t</navMap>\n</ncx>\n";
@@ -292,9 +308,10 @@ void Book::generate_toc(bool cover) const
 	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
 	<< "\t</head>\n\n"
 	<< "\t<body>\n"
-	<< "\t\t<h1>Table of Contents</h1>\n"
-	<< "\t\t<h2>" << this->title << "</h2>\n"
-	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<div>\n\n";
+	<< "\t\t<div>\n"
+	<< "\t\t\t<h1>Table of Contents</h1>\n"
+	<< "\t\t\t<h2>" << this->title << "</h2>\n"
+	<< "\t\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
 	if (cover)
 	{
 		toc << "\t\t\t" << this->cover.get_toc_entry() << "<br/>\n";
@@ -312,7 +329,7 @@ void Book::generate_toc(bool cover) const
 
 void Book::generate_cover() const
 {
-	std::ofstream cover{this->path + this->cover.filename};
+	std::ofstream cover{this->path / this->cover.filename};
 
 	cover << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
 	<< "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"

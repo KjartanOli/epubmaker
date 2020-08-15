@@ -18,6 +18,7 @@
  */
 
 #include <string_view>
+#include <map>
 
 #include "../headers/args.hpp"
 
@@ -36,10 +37,12 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 		{"--help", HELP},
 		{"-l", LANGUAGE},
 		{"--language", LANGUAGE},
-		{"--identifier", IDENTIFIER},
 		{"-i", IDENTIFIER},
-		{"--publisher", PUBLISHER},
+		{"--identifier", IDENTIFIER},
 		{"-p", PUBLISHER},
+		{"--publisher", PUBLISHER},
+		{"-D", DESCRIPTION},
+		{"--description", DESCRIPTION},
 		{"-V", VERSION},
 		{"--version", VERSION},
 		{"-o", OUTFILE},
@@ -69,21 +72,7 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 					return INVALID_OPTION;
 				}
 
-				// if the path is to a subdirectory add './' in front of its name
-				if (arg[0] != '.' && arg[0] != '/')
-				{
-					args.path = "./" + std::string{arg.data()};
-				}
-				else
-				{
-					args.path = arg;
-				}
-
-				if (arg.back() != '/')
-				{
-					args.path += '/';
-				}
-
+				args.path = arg;
 				break;
 
 			case AUTHOR:
@@ -107,7 +96,7 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 			case DATE:
 				if (!is_argument(argv[i + 1]))
 				{
-					args.requires_argument = arg;
+					args.requiresArgument = arg;
 					return ARG_REQUIRED;
 				}
 
@@ -150,6 +139,15 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 				args.publisher = argv[++i];
 				break;
 
+			case DESCRIPTION:
+				if (!is_argument(argv[i + 1]))
+				{
+					return ARG_REQUIRED;
+				}
+
+				args.description = argv[++i];
+				break;
+
 			case HELP:
 				args.help = true;
 				break;
@@ -168,7 +166,7 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 					return ARG_REQUIRED;
 				}
 
-				args.styleDir = argv[++i];
+				args.styleDirs.push_back(argv[++i]);
 				break;
 
 			case NOSTYLE:
@@ -181,7 +179,7 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 					return ARG_REQUIRED;
 				}
 
-				args.imgDir = argv[++i];
+				args.imgDirs.push_back(argv[++i]);
 				break;
 
 			case COVER:

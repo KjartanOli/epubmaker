@@ -21,19 +21,14 @@
 #include <string_view>
 #include <string>
 #include <vector>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <map>
 #include <regex>
-#include <filesystem>
 
 #include "../headers/misc.hpp"
 #include "../headers/status.hpp"
 #include "../headers/filter.hpp"
 #include "../headers/mediaType.hpp"
-
-namespace fs = std::filesystem;
+#include "../headers/fs.hpp"
 
 std::string get_extension(std::string_view filename)
 {
@@ -46,6 +41,7 @@ std::string get_extension(std::string_view filename)
 	}
 	return "";
 }
+
 std::vector<std::string> split(std::string_view string, const char separator)
 {
 	std::vector<std::string> results{};
@@ -68,28 +64,16 @@ std::vector<std::string> split(std::string_view string, const char separator)
 	return results;
 }
 
-// get the name of a file without its extension or path
-std::string get_basename(std::string_view filename)
-{
-	return split(strip_path(filename), '.')[0];
-}
-
-std::string strip_path(std::string_view filename)
-{
-	static const std::regex path{"(.+/)+(.+)"};
-	return std::regex_replace(filename.data(), path, "$2");
-}
-
 std::string get_mediaType(std::string_view extension)
 {
 	static std::map<std::string_view, mediaType> mediaTypeMap
 	{
-		{"html", XHTML},
-		{"xhtml", XHTML},
-		{"png", PNG},
-		{"css", CSS},
-		{"jpg", JPEG},
-		{"ncx", NCX},
+		{".html", XHTML},
+		{".xhtml", XHTML},
+		{".png", PNG},
+		{".css", CSS},
+		{".jpg", JPEG},
+		{".ncx", NCX},
 	};
 
 	switch (mediaTypeMap[extension])
@@ -129,9 +113,9 @@ std::string add_extension(std::string_view filename, std::string_view extension)
 	}
 }
 
-std::vector<std::string> list_dir(std::string_view dirname)
+std::vector<fs::path> list_dir(const fs::path& dirname)
 {
-	std::vector<std::string> results{};
+	std::vector<fs::path> results{};
 
 	for (auto& file : fs::directory_iterator(dirname))
 	{
@@ -141,16 +125,16 @@ std::vector<std::string> list_dir(std::string_view dirname)
 	return results;
 }
 
-std::vector<std::string> get_stylesheets(std::string_view dirname)
+std::vector<fs::path> get_stylesheets(const fs::path& dirname)
 {
-	return filter<std::string>(list_dir(dirname), [](std::string_view filename){return split(strip_path(filename), '.')[1] == "css";});
+	return filter<fs::path>(list_dir(dirname), [](const fs::path& file){return file.extension() == ".css";});
 }
 
 void version()
 {
 	static const short major{1};
-	static const short minor{1};
-	static const short hotfix{3};
+	static const short minor{2};
+	static const short hotfix{0};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"

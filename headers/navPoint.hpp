@@ -22,7 +22,8 @@
 
 	#include <string>
 	#include <vector>
-	#include <string_view>
+
+	#include "fs.hpp"
 
 	class Chapter;
 
@@ -37,7 +38,7 @@
 			std::string text;
 
 		public:
-			NavPoint(std::string_view source, std::string_view title);
+			NavPoint(const fs::path& filepath, std::string_view title);
 			operator std::string() const;
 
 		// If --no-cover and/or --no-toc are passed the playOrder value of all NavPoints

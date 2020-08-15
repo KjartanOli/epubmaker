@@ -20,25 +20,28 @@
 #ifndef BOOK_H
 	#define BOOK_H
 
+	#include <ctime>
+	#include <deque>
 	#include <string>
 	#include <string_view>
 	#include <vector>
 	#include <chrono>
 
 	#include "resource.hpp"
-	#include "manifestEntry.hpp"
 	#include "status.hpp"
 	#include "chapter.hpp"
+	#include "fs.hpp"
 
 	class Book
 	{
 		private:
-			std::string path;
+			fs::path path;
 			std::string title;
 			std::string author;
 			std::string language;
 			std::string identifier;
 			std::string publisher;
+			std::string description;
 			std::vector<Chapter> chapters;
 			Chapter cover;
 			Chapter toc;
@@ -55,17 +58,18 @@
 
 		public:
 			Book(
-				std::string_view path,
+				const fs::path& path,
 				std::string_view title,
 				std::string_view author,
 				std::string_view language,
 				std::string_view identifier,
-				std::string publisher,
+				std::string_view publisher,
+				std::string_view description,
 				const std::vector<std::string>& chapters,
 				std::string_view coverFile,
-				std::string_view styleDir,
+				const std::deque<std::string>& styleDirs,
 				bool stylesheets,
-				std::string_view imgDir,
+				const std::deque<std::string>& imgDirs,
 				bool images,
 				std::time_t date
 					= std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())

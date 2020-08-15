@@ -21,17 +21,18 @@
 	#define MANIFEST_ENTRY_H
 
 	#include <string>
-	#include <string_view>
+
+	#include "fs.hpp"
 
 	class ManifestEntry
 	{
 		private:
+			std::string id;
 			std::string href;
 			std::string mediaType;
-			std::string id;
 
 		public:
-			ManifestEntry(std::string_view filename);
+			ManifestEntry(const fs::path& filename);
 			operator std::string() const;
 	};
 #endif

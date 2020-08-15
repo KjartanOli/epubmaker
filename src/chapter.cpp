@@ -17,26 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <filesystem>
 #include <fstream>
 #include <string_view>
 #include <string>
 #include <vector>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <regex>
-#include <filesystem>
 
 #include "../headers/chapter.hpp"
 #include "../headers/misc.hpp"
+#include "../headers/fs.hpp"
 
-namespace fs = std::filesystem;
-
-bool is_chapter(std::string_view filepath)
+bool is_chapter(const fs::path& filepath)
 {
-	static const std::vector<std::string_view> extensions{"html", "xhtml"};
+	static const std::vector<std::string_view> extensions{".html", ".xhtml"};
 
-	std::string_view extension{get_extension(filepath)};
+	std::string_view extension{filepath.extension().c_str()};
 
 	for (std::string_view ext : extensions)
 	{
@@ -50,35 +46,53 @@ bool is_chapter(std::string_view filepath)
 }
 
 std::string verify_chapter_existance(
-	const std::vector<std::string>& chapters,
-	std::string_view path
+	std::vector<std::string>& chapters,
+	const fs::path& path
 )
 {
-	for (const std::string& chapter : chapters)
+	for (fs::path chapter : chapters)
 	{
-		std::string filepath{std::string{path.data()} + chapter};
-		if (!fs::exists(filepath))
+		// check if the chapter has a parent path or is just a filename
+		bool parentPath{chapter.has_parent_path()};
+
+		if (!chapter.is_absolute())
 		{
-			return filepath;
+			chapter = path / chapter;
+		}
+
+		if (!fs::exists(chapter))
+		{
+			if (!parentPath)
+			{
+				chapter = chapter.parent_path() / "Text" / chapter.filename();
+				if (!fs::exists(chapter))
+				{
+					return chapter.filename();
+				}
+			}
+			else
+			{
+				return chapter;
+			}
 		}
 	}
 
 	return "";
 }
 
-Chapter::Chapter(std::string_view filename)
+Chapter::Chapter(const fs::path& filepath)
 :
-	Resource{filename},
+	Resource{filepath},
 	title{this->get_title()},
-	spineEntry{strip_path(filename)},
+	spineEntry{filepath.filename().c_str()},
 	navPoint{filename, this->title}
 {}
 
-Chapter::Chapter(std::string_view filepath, std::string_view title)
+Chapter::Chapter(const fs::path& filepath, std::string_view title)
 :
 	Resource{filepath},
 	title{title},
-	spineEntry{strip_path(filepath)},
+	spineEntry{filepath.filename().c_str()},
 	navPoint{filepath, this->title}
 {}
 
@@ -98,7 +112,7 @@ std::string Chapter::get_title()
 		}
 	}
 
-	return get_basename(this->filename);
+	return this->filename;
 
 }
 

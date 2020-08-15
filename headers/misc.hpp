@@ -23,14 +23,13 @@
 	#include <string_view>
 	#include <vector>
 
-	std::string get_extension(std::string_view filename);
+	#include "fs.hpp"
+
 	std::vector<std::string> split(std::string_view string, const char separator = ' ');
-	std::string get_basename(std::string_view filename);
 	std::string get_mediaType(std::string_view extension);
-	std::string strip_path(std::string_view filename);
 	std::string add_extension(std::string_view filename, std::string_view extension);
-	std::vector<std::string> list_dir(std::string_view dirname);
-	std::vector<std::string> get_stylesheets(std::string_view dirname);
+	std::vector<fs::path> list_dir(const fs::path& dirname);
+	std::vector<fs::path> get_stylesheets(const fs::path& dirname);
 
 #endif
 

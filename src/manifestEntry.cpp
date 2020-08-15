@@ -25,11 +25,12 @@
 #include "../headers/manifestEntry.hpp"
 #include "../headers/misc.hpp"
 #include "../headers/resourceType.hpp"
+#include "../headers/fs.hpp"
 
-ManifestEntry::ManifestEntry(std::string_view filename)
+ManifestEntry::ManifestEntry(const fs::path& filepath)
 :
-	mediaType{get_mediaType(get_extension(filename))},
-	id{filename}
+	id{filepath.filename()},
+	mediaType{get_mediaType(filepath.extension().c_str())}
 {
 	static std::map<std::string, resourceType> resourceTypeMap
 	{
@@ -39,31 +40,21 @@ ManifestEntry::ManifestEntry(std::string_view filename)
 		{"text/css", STYLESHEET}
 	};
 
+	std::string filename{filepath.filename()};
 	switch (resourceTypeMap[this->mediaType])
 	{
 		case CHAPTER:
-			this->href = "Text/" + std::string{filename};
+			this->href = "Text/" + filename;
 			break;
 
 		case IMAGE:
-			this->href = "Images/"  + std::string{filename};
+			this->href = "Images/"  + filename;
 			break;
 
 		case STYLESHEET:
-			this->href = "Styles/" + std::string{filename};
+			this->href = "Styles/" + filename;
 			break;
 	}
-/*
-	if (this->mediaType == "application/xhtml+xml")
-	{
-		this->href = ("Text/" + std::string{filename});
-	}
-
-	if (filename == "toc.ncx")
-	{
-		this->href = "toc.ncx";
-	}
-*/
 }
 
 ManifestEntry::operator std::string() const

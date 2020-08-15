@@ -20,30 +20,32 @@
 #ifndef ARGS_H
 	#define ARGS_H
 
-//	#include <json/value.h>
+	#include <deque>
 	#include <string_view>
 	#include <string>
-	#include <vector>
-	#include <map>
-//	#include <json/json.h>
+	#include <queue>
 
 	#include "status.hpp"
+	#include "defaults.hpp"
+	#include "fs.hpp"
 
 	struct arguments
 	{
 		std::string author;
 		std::string title;
-		std::string date;
-		std::string outfile{"book.epub"};
+		std::string outfile{defaults::outfile};
 		std::string language;
 		std::string identifier;
 		std::string publisher;
+		std::string date;
 		std::string unknownOption;
-		std::string requires_argument;
-		std::string path;
-		std::string styleDir{"Styles"};
-		std::string imgDir{"Images"};
-		std::string coverFile{"cover.xhtml"};
+		std::string requiresArgument;
+		std::string description;
+		fs::path path;
+		std::deque<std::string> styleDirs{std::string{defaults::styleDir}};
+		std::deque<std::string> imgDirs{std::string{defaults::imgDir}};
+		std::string coverFile{defaults::coverfile};
+
 		bool help{false};
 		bool version{false};
 		bool force{false};
@@ -63,6 +65,7 @@
 		LANGUAGE,
 		IDENTIFIER,
 		PUBLISHER,
+		DESCRIPTION,
 		VERSION,
 		OUTFILE,
 		FORCE,

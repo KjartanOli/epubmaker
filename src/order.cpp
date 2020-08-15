@@ -26,7 +26,8 @@
 
 std::string read_chapter_order(std::ifstream& order, std::vector<std::string>& chapters)
 {
-	std::string chapter{};
+	//std::string chapter{};
+	fs::path chapter{};
 
 	while (order >> chapter)
 	{
