@@ -20,9 +20,9 @@
 #ifndef BOOK_H
 	#define BOOK_H
 
-	#include <ctime>
 	#include <deque>
-	#include <string>
+#include <filesystem>
+#include <string>
 	#include <string_view>
 	#include <vector>
 	#include <chrono>
@@ -65,11 +65,11 @@
 				std::string_view identifier,
 				std::string_view publisher,
 				std::string_view description,
-				const std::vector<std::string>& chapters,
+				const std::vector<fs::path>& chapters,
 				std::string_view coverFile,
-				const std::deque<std::string>& styleDirs,
+				std::deque<fs::path>& styleDirs,
 				bool stylesheets,
-				const std::deque<std::string>& imgDirs,
+				std::deque<fs::path>& imgDirs,
 				bool images,
 				std::time_t date
 					= std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())

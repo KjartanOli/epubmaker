@@ -56,3 +56,4 @@ conditions is not met, Epubmaker will terminate immediately with no output.
 * Due to an issue I don't understand with libzippp when adding data from memory
   into an archive versions 1.1.2 and beyond write the generated cover and table of
   contents to disk.
+

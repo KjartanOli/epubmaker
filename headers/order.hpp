@@ -20,12 +20,13 @@
 #ifndef ORDER_H
 	#define ORDER_H
 
-	#include <string>
+	#include <filesystem>
 	#include <vector>
 	#include <fstream>
 
 	#include "chapter.hpp"
+	#include "fs.hpp"
 
-	std::string read_chapter_order(std::ifstream& order, std::vector<std::string>& chapters);
+	fs::path read_chapter_order(std::ifstream& order, std::vector<fs::path>& chapters);
 #endif
 

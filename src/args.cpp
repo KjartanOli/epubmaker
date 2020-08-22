@@ -41,7 +41,6 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 		{"--identifier", IDENTIFIER},
 		{"-p", PUBLISHER},
 		{"--publisher", PUBLISHER},
-		{"-D", DESCRIPTION},
 		{"--description", DESCRIPTION},
 		{"-V", VERSION},
 		{"--version", VERSION},
@@ -73,6 +72,23 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 				}
 
 				args.path = arg;
+				break;
+
+				// if the path is not add './' in front of its name
+				if (arg[0] != '.')
+				{
+					args.path = "./" + std::string{arg.data()};
+				}
+				else
+				{
+					args.path = arg;
+				}
+
+				if (arg.back() != '/')
+				{
+					args.path += '/';
+				}
+
 				break;
 
 			case AUTHOR:
