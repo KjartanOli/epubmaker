@@ -45,10 +45,6 @@
 		std::deque<fs::path> styleDirs{fs::path{defaults::styleDir}};
 		std::deque<fs::path> imgDirs{fs::path{defaults::imgDir}};
 		std::string coverFile{defaults::coverfile};
-		/*
-		std::string styleDir{defaults::styledir};
-		std::string imgDir{defaults::imagedir};
-		*/
 
 		bool help{false};
 		bool version{false};

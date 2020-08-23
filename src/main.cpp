@@ -199,7 +199,8 @@ int main(int argc, char** argv)
 		args.styleDirs,
 		args.stylesheets,
 		args.imgDirs,
-		args.images
+		args.images,
+		args.date
 	};
 
 	statusCode status{book.write(add_extension(args.outfile, ".epub"), args.force, args.cover, args.toc)};

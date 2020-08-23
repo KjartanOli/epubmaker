@@ -17,8 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ctime>
 #include <fstream>
 #include <deque>
+#include <iomanip>
 #include <string_view>
 
 #include <libzippp/libzippp.h>
@@ -42,7 +44,7 @@ Book::Book(
 	bool stylesheets,
 	std::deque<fs::path>& imgDirs,
 	bool images,
-	std::time_t date
+	std::string_view date
 	)
 :
 	path{path},
@@ -204,8 +206,16 @@ std::string Book::generate_opf() const
 	{
 		opf << "\t\t<dc:description>" << this->description << "</dc:description>\n";
 	}
-	opf << "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%Y-%m-%d") << "</dc:date>\n"
-	<< "\t</metadata>\n\n"
+	if (this->date != "")
+	{
+		opf << "\t\t<dc:date>" << this->date << "</dc:date>\n";
+	}
+	else
+	{
+		std::time_t date{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+		opf << "\t\t<dc:date>" << std::put_time(std::localtime(&date), "%Y-%m-%d") << "</dc:date>\n";
+	}
+	opf << "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>"
 	<< "\t\t<!-- Chapters -->\n"

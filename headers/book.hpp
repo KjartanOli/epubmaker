@@ -21,9 +21,8 @@
 	#define BOOK_H
 
 	#include <deque>
-#include <filesystem>
-#include <string>
 	#include <string_view>
+	#include <string>
 	#include <vector>
 	#include <chrono>
 
@@ -47,7 +46,7 @@
 			Chapter toc;
 			std::vector<Resource> stylesheets;
 			std::vector<Resource> images;
-			std::time_t date;
+			std::string date;
 
 			// Utilities to generate the various structure files
 			std::string generate_opf() const;
@@ -71,8 +70,7 @@
 				bool stylesheets,
 				std::deque<fs::path>& imgDirs,
 				bool images,
-				std::time_t date
-					= std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())
+				std::string_view date
 			);
 			statusCode write(std::string_view filename, bool force, bool cover, bool tableOfContents);
 	};
