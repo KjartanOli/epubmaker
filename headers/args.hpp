@@ -23,7 +23,7 @@
 	#include <deque>
 	#include <string_view>
 	#include <string>
-	#include <queue>
+	#include <vector>
 
 	#include "status.hpp"
 	#include "defaults.hpp"
@@ -33,17 +33,17 @@
 	{
 		std::string author;
 		std::string title;
+		std::string date;
 		std::string outfile{defaults::outfile};
 		std::string language;
 		std::string identifier;
 		std::string publisher;
-		std::string date;
 		std::string unknownOption;
 		std::string requiresArgument;
 		std::string description;
 		fs::path path;
-		std::deque<std::string> styleDirs{std::string{defaults::styleDir}};
-		std::deque<std::string> imgDirs{std::string{defaults::imgDir}};
+		std::deque<fs::path> styleDirs{fs::path{defaults::styleDir}};
+		std::deque<fs::path> imgDirs{fs::path{defaults::imgDir}};
 		std::string coverFile{defaults::coverfile};
 
 		bool help{false};

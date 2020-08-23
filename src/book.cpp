@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <deque>
-#include <filesystem>
+#include <ctime>
 #include <fstream>
+#include <deque>
+#include <iomanip>
+#include <string_view>
 
 #include <libzippp/libzippp.h>
-#include <string_view>
 
 #include "../headers/book.hpp"
 #include "../headers/misc.hpp"
@@ -37,13 +38,13 @@ Book::Book(
 	std::string_view identifier,
 	std::string_view publisher,
 	std::string_view description,
-	const std::vector<std::string>& chapters,
+	const std::vector<fs::path>& chapters,
 	std::string_view coverFile,
-	const std::deque<std::string>& styleDirs,
+	std::deque<fs::path>& styleDirs,
 	bool stylesheets,
-	const std::deque<std::string>& imgDirs,
+	std::deque<fs::path>& imgDirs,
 	bool images,
-	std::time_t date
+	std::string_view date
 	)
 :
 	path{path},
@@ -62,9 +63,9 @@ Book::Book(
 {
 	this->chapters.reserve(chapters.size());
 
-	for (const std::string& chapter : chapters)
+	for (fs::path chapter : chapters)
 	{
-		this->chapters.emplace_back(this->path / chapter);
+		this->chapters.emplace_back(chapter);
 	}
 
 	if (stylesheets)
@@ -205,8 +206,16 @@ std::string Book::generate_opf() const
 	{
 		opf << "\t\t<dc:description>" << this->description << "</dc:description>\n";
 	}
-	opf << "\t\t<dc:date>" << std::put_time(std::localtime(&(this->date)), "%F") << "</dc:date>\n"
-	<< "\t</metadata>\n\n"
+	if (this->date != "")
+	{
+		opf << "\t\t<dc:date>" << this->date << "</dc:date>\n";
+	}
+	else
+	{
+		std::time_t date{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+		opf << "\t\t<dc:date>" << std::put_time(std::localtime(&date), "%Y-%m-%d") << "</dc:date>\n";
+	}
+	opf << "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>\n\n"
 	<< "\t\t<!-- Chapters -->\n"
@@ -308,23 +317,22 @@ void Book::generate_toc(bool cover) const
 	<< "<meta content=\"http://www.w3.org/1999/xhtml; charset=utf-8\" http-equiv=\"Content-Type\"/>\n"
 	<< "\t</head>\n\n"
 	<< "\t<body>\n"
-	<< "\t\t<div>\n"
-	<< "\t\t\t<h1>Table of Contents</h1>\n"
-	<< "\t\t\t<h2>" << this->title << "</h2>\n"
-	<< "\t\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
+	<< "\t\t<h1>Table of Contents</h1>\n"
+	<< "\t\t<h2>" << this->title << "</h2>\n"
+	<< "\t\t<h3>" << this->author << "</h3>\n\t\t<br/><br/>\n\n";
 	if (cover)
 	{
-		toc << "\t\t\t" << this->cover.get_toc_entry() << "<br/>\n";
+		toc << "\t\t" << this->cover.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t\t\t" << this->toc.get_toc_entry() << "<br/>\n";
+	toc << "\t\t" << this->toc.get_toc_entry() << "<br/>\n";
 
 	for (const Chapter& chapter : this->chapters)
 	{
-		toc << "\t\t\t" << chapter.get_toc_entry() << "<br/>\n";
+		toc << "\t\t" << chapter.get_toc_entry() << "<br/>\n";
 	}
 
-	toc << "\t\t</div>\n\t</body>\n</html>\n";
+	toc << "\t</body>\n</html>\n";
 }
 
 void Book::generate_cover() const

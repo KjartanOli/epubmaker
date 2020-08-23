@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <filesystem>
 #include <vector>
 #include <string>
 #include <string_view>
@@ -84,6 +85,7 @@ int main(int argc, char** argv)
 	if (!fs::exists(args.path))
 	{
 		std::cerr << "Directory " << args.path << " Does not exist\n\n";
+		help();
 		return DIR_DOES_NOT_EXIST;
 	}
 
@@ -91,17 +93,19 @@ int main(int argc, char** argv)
 	{
 		std::cerr << "Directory " << args.path << " Does not contain a " << orderFile << " file\n\n";
 
+		help();
 		return NO_ORDER_FILE;
 	}
 
 	std::ifstream order{args.path / orderFile};
-	std::vector<std::string> chapters{};
+	std::vector<fs::path> chapters{};
 
 	if (std::string chapter{read_chapter_order(order, chapters)}; chapter != "")
 	{
 		std::cerr << "Invalid extension for chapter: " << chapter << " in " << args.path / orderFile << '\n'
 		<< "Please make sure that it only contains .html and/or .xhtml files\n\n";
 
+		help();
 		return INVALID_CHAPTER_FILE;
 	}
 
@@ -109,10 +113,11 @@ int main(int argc, char** argv)
 	{
 		std::cerr << "Chapter " << chapter << " in " <<  args.path / orderFile << " does not exist\n\n";
 
+		help();
 		return CHAPTER_DOES_NOT_EXIST;
 	}
 
-	// Error if --no-style and a custom styledir are both specified
+// Error if --no-style and a custom styledir are both specified
 	if (!args.stylesheets && args.styleDirs.size() > 1)
 	{
 		std::cerr << "Incompatable options --no-style and --style-dir " << args.styleDirs[1] << "\n\n";
@@ -130,7 +135,7 @@ int main(int argc, char** argv)
 
 	if (args.stylesheets)
 	{
-		for (std::string_view styledir : args.styleDirs)
+		for (const fs::path styledir : args.styleDirs)
 		{
 			if (!fs::exists(args.path / styledir))
 			{
@@ -157,7 +162,7 @@ int main(int argc, char** argv)
 
 	if (args.images)
 	{
-		for (std::string_view imgDir : args.imgDirs)
+		for (const fs::path& imgDir : args.imgDirs)
 		{
 			if (!fs::exists(args.path / imgDir))
 			{
@@ -195,6 +200,7 @@ int main(int argc, char** argv)
 		args.stylesheets,
 		args.imgDirs,
 		args.images,
+		args.date
 	};
 
 	statusCode status{book.write(add_extension(args.outfile, ".epub"), args.force, args.cover, args.toc)};
@@ -204,10 +210,12 @@ int main(int argc, char** argv)
 		case OUTFILE_EXISTS:
 			std::cerr << "Target file " << args.path << args.outfile << " already exists and --force was not specified\n\n";
 
+			help();
 			return OUTFILE_EXISTS;
 
 		case COULD_NOT_OPEN:
 			std::cerr << "Could not open file " << args.path / args.outfile << " for writing\n";
+			help();
 			return COULD_NOT_OPEN;
 
 		case NORMAL:
@@ -239,7 +247,7 @@ void help(std::ostream& out)
 	<< indent << indent << "-a, --author=AUTHOR              Set the author of the document\n"
 	<< indent << indent << "-t, --title=TITLE                Set the title of the document\n"
 	<< indent << indent << "-d, --date=DATE                  Set the publication date, if this argument is skipped the current date and time are used\n"
-	<< indent << indent << "-D, --description=DESCRIPTION    Set the description of the document\n"
+	<< indent << indent << "    --description=DESCRIPTION    Set the description of the document\n"
 	<< indent << indent << "-i, --identifier=IDENTIFIER      Set the identifier of the document\n"
 	<< indent << indent << "-l, --language=LANGUAGE          Set the language of the document\n"
 	<< indent << indent << "-p, --publisher=PUBLISHER        Set the publisher of the document\n"
@@ -247,13 +255,16 @@ void help(std::ostream& out)
 	<< '\n' << indent << "Input control:\n"
 	<< indent << indent <<  "-c, --cover=COVERFILE            Supply the path for a custom cover for the document. If this argument is skipped\n"
 	<< "                                     the file DIRNAME/cover.xhtml is used if it exists, else a cover is generated automatically\n"
-	<< indent << indent << "--img-dir=IMGDIR                 Specify an additional directory in which to search for images.\n"
-		<< indent << indent << "--no-cover                       Do not generate a cover for the document\n"
+	<< indent << indent << "--img-dir=IMGDIR                 Specify a directory in which to search for images."
+	<< " If this argument is skipped\n"
+	<< "                                     the default of DIRNAME/Images is used\n"
+	<< indent << indent << "--no-cover                       Do not generate a cover for the document\n"
 	<< indent << indent << "--no-toc                         Do not generate a table of contents\n"
 	<< indent << indent << "--no-style                       Do not add any stylesheets to the document\n"
 	<< indent << indent << "--no-images                      Do not add any images to the document\n"
-	<< indent << indent << "--style-dir STYLEDIR             Specify an additional directory in which to search for stylesheets.\n"
-	<< indent << "Output control:\n"
+	<< indent << indent << "--style-dir STYLEDIR             Specify a directory in which to search for stylesheets. If this argument is skipped\n"
+	<< "                                     the default of DIRNAME/Styles is used\n"
+	<< '\n' << indent << "Output control:\n"
 	<< indent << indent << "-f, --force                      Overwrite the output file if it already exists\n"
 	<< indent << indent << "-o, --outfile=OUTFILE            Set the file to write output to. If this argument is skipped\n"
 	<< "                                     output is written to DIRNAME/book.epub\n"
@@ -264,19 +275,19 @@ void help(std::ostream& out)
 	<< '\n';
 
 	out << "Error codes:\n"
-	<< "    " << NOT_ENOUGH_ARGUMENTS << "    Not enough arguments were provided\n"
-	<< "    " << DIR_DOES_NOT_EXIST << "    The target directory does not exist\n"
-	<< "    " << NO_ORDER_FILE << "    No " << orderFile << " was found in the target directory\n"
-	<< "    " << INVALID_OPTION << "    An unrecognised option was passed\n"
-	<< "    " << INCOMPATABLE_OPTIONS << "    Two or more options that are incompatable were passed\n"
-	<< "    " << ARG_REQUIRED << "    An option that requires an argument was not passed one\n"
-	<< "    " << INVALID_CHAPTER_FILE << "    A file listed in " << orderFile << " does not have a valid extension\n"
-	<< "    " << CHAPTER_DOES_NOT_EXIST << "    A file listed in " << orderFile << " does not exist\n"
-	<< "    " << STYLEDIR_DOES_NOT_EXIST << "    A user specified directory for stylesheets does not exist\n"
-	<< "   " << IMGDIR_DOES_NOT_EXIST << "    A user specified directory for images does not exist\n"
-	<< "   " << OUTFILE_EXISTS << "    The target file already exists and --force was not specified\n"
-	<< "   " << COULD_NOT_OPEN << "    Failed to open output file\n"
-	<< "   " << UNKOWN_ERROR << "    An unknown error occurred, this should never occur\n"
+	<< indent << NOT_ENOUGH_ARGUMENTS << "\tNot enough arguments were provided\n"
+	<< indent << DIR_DOES_NOT_EXIST << "\tThe target directory does not exist\n"
+	<< indent << NO_ORDER_FILE << "\tNo " << orderFile << " was found in the target directory\n"
+	<< indent << INVALID_OPTION << "\tAn unrecognised option was passed\n"
+	<< indent << INCOMPATABLE_OPTIONS << "\tTwo or more options that are incompatable were passed\n"
+	<< indent << ARG_REQUIRED << "\tAn option that requires an argument was not passed one\n"
+	<< indent << INVALID_CHAPTER_FILE << "\tA file listed in " << orderFile << " does not have a valid extension\n"
+	<< indent << CHAPTER_DOES_NOT_EXIST << "\tA file listed in " << orderFile << " does not exist\n"
+	<< indent << STYLEDIR_DOES_NOT_EXIST << "\tA directory for stylesheets does not exist and --no-style was not specified\n"
+	<< indent << IMGDIR_DOES_NOT_EXIST << "\tA directory for images does not exist and --no-images wan not specified\n"
+	<< indent << OUTFILE_EXISTS << "\tThe target file already exists and --force was not specified\n"
+	<< indent << COULD_NOT_OPEN << "\tFailed to open output file\n"
+	<< indent << UNKOWN_ERROR << "\tAn unknown error occurred, this should never occur\n"
 	<< '\n';
 }
 

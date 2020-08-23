@@ -20,7 +20,8 @@
 #ifndef CHAPTER_H
 	#define CHAPTER_H
 
-	#include <string>
+	#include <filesystem>
+#include <string>
 	#include <string_view>
 	#include <vector>
 
@@ -54,8 +55,8 @@
 	bool is_chapter(const fs::path& path);
 	std::string verify_chapter_existance
 	(
-		std::vector<std::string>& chapters,
-		const fs::path& path
+		std::vector<fs::path>& chapters,
+		fs::path& path
 	);
 	std::string get_title(std::string_view filename);
 

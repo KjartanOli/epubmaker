@@ -20,10 +20,9 @@
 #ifndef BOOK_H
 	#define BOOK_H
 
-	#include <ctime>
 	#include <deque>
-	#include <string>
 	#include <string_view>
+	#include <string>
 	#include <vector>
 	#include <chrono>
 
@@ -47,7 +46,7 @@
 			Chapter toc;
 			std::vector<Resource> stylesheets;
 			std::vector<Resource> images;
-			std::time_t date;
+			std::string date;
 
 			// Utilities to generate the various structure files
 			std::string generate_opf() const;
@@ -65,14 +64,13 @@
 				std::string_view identifier,
 				std::string_view publisher,
 				std::string_view description,
-				const std::vector<std::string>& chapters,
+				const std::vector<fs::path>& chapters,
 				std::string_view coverFile,
-				const std::deque<std::string>& styleDirs,
+				std::deque<fs::path>& styleDirs,
 				bool stylesheets,
-				const std::deque<std::string>& imgDirs,
+				std::deque<fs::path>& imgDirs,
 				bool images,
-				std::time_t date
-					= std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())
+				std::string_view date
 			);
 			statusCode write(std::string_view filename, bool force, bool cover, bool tableOfContents);
 	};

@@ -1,3 +1,13 @@
+# 1.2.1
+
+## Fixed
+* A filepath related bug which caused the writing of the outfile to fail
+* The date option actually has any effects now
+
+## Changed
+* A few more internal functions now use std::filesystem::path instead of
+  std::string
+
 # 1.2.0
 ## Added
 * Allows multiple styleDirs and imgDirs

@@ -17,16 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <filesystem>
 #include <string>
 #include <string_view>
 #include <fstream>
 
 #include "../headers/order.hpp"
 #include "../headers/chapter.hpp"
+#include "../headers/fs.hpp"
 
-std::string read_chapter_order(std::ifstream& order, std::vector<std::string>& chapters)
+fs::path read_chapter_order(std::ifstream& order, std::vector<fs::path>& chapters)
 {
-	//std::string chapter{};
 	fs::path chapter{};
 
 	while (order >> chapter)
