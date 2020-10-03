@@ -66,8 +66,11 @@ int main(int argc, char** argv)
 			return ARG_REQUIRED;
 
 		// parse_args can only return NORMAL, INVALID_OPTION, or ARG_REQUIRED
-		default:
+		case NORMAL:
 			break;
+
+		default:
+			return UNKOWN_ERROR;
 	}
 
 	if (args.help)
@@ -247,7 +250,7 @@ void help(std::ostream& out)
 	<< indent << indent << "-a, --author=AUTHOR              Set the author of the document\n"
 	<< indent << indent << "-t, --title=TITLE                Set the title of the document\n"
 	<< indent << indent << "-d, --date=DATE                  Set the publication date, if this argument is skipped the current date and time are used\n"
-	<< indent << indent << "    --description=DESCRIPTION    Set the description of the document\n"
+	<< indent << indent << "-D, --description=DESCRIPTION    Set the description of the document\n"
 	<< indent << indent << "-i, --identifier=IDENTIFIER      Set the identifier of the document\n"
 	<< indent << indent << "-l, --language=LANGUAGE          Set the language of the document\n"
 	<< indent << indent << "-p, --publisher=PUBLISHER        Set the publisher of the document\n"
@@ -257,13 +260,13 @@ void help(std::ostream& out)
 	<< "                                     the file DIRNAME/cover.xhtml is used if it exists, else a cover is generated automatically\n"
 	<< indent << indent << "--img-dir=IMGDIR                 Specify a directory in which to search for images."
 	<< " If this argument is skipped\n"
-	<< "                                     the default of DIRNAME/Images is used\n"
+	<< "                                     only the default of DIRNAME/Images is used\n"
 	<< indent << indent << "--no-cover                       Do not generate a cover for the document\n"
 	<< indent << indent << "--no-toc                         Do not generate a table of contents\n"
 	<< indent << indent << "--no-style                       Do not add any stylesheets to the document\n"
 	<< indent << indent << "--no-images                      Do not add any images to the document\n"
 	<< indent << indent << "--style-dir STYLEDIR             Specify a directory in which to search for stylesheets. If this argument is skipped\n"
-	<< "                                     the default of DIRNAME/Styles is used\n"
+	<< "                                     only the default of DIRNAME/Styles is used\n"
 	<< '\n' << indent << "Output control:\n"
 	<< indent << indent << "-f, --force                      Overwrite the output file if it already exists\n"
 	<< indent << indent << "-o, --outfile=OUTFILE            Set the file to write output to. If this argument is skipped\n"

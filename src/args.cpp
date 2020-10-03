@@ -41,6 +41,7 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 		{"--identifier", IDENTIFIER},
 		{"-p", PUBLISHER},
 		{"--publisher", PUBLISHER},
+		{"-D", DESCRIPTION},
 		{"--description", DESCRIPTION},
 		{"-V", VERSION},
 		{"--version", VERSION},
@@ -226,6 +227,6 @@ statusCode parse_args(arguments& args, int argc, char** argv)
 
 bool is_argument(std::string_view argument)
 {
-	// assume that if the next element in argv starts with a '-' assume it is a command
+	// if an element in argv starts with a '-' assume it is a command
 	return !(argument[0] == '-');
 }

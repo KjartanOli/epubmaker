@@ -30,39 +30,6 @@
 #include "../headers/mediaType.hpp"
 #include "../headers/fs.hpp"
 
-std::string get_extension(std::string_view filename)
-{
-	std::vector<std::string> vec{split(filename, '.')};
-
-	size_t length{vec.size()};
-	if (length > 1)
-	{
-		return vec[length - 1];
-	}
-	return "";
-}
-std::vector<std::string> split(std::string_view string, const char separator)
-{
-	std::vector<std::string> results{};
-	std::string tmp{};
-
-	for (const char c : string)
-	{
-		if (c != separator)
-		{
-			tmp += c;
-		}
-		else
-		{
-			results.push_back(tmp);
-			tmp = "";
-		}
-	}
-	results.push_back(tmp);
-
-	return results;
-}
-
 std::string get_mediaType(std::string_view extension)
 {
 	static std::map<std::string_view, mediaType> mediaTypeMap
@@ -133,7 +100,7 @@ void version()
 {
 	static const short major{1};
 	static const short minor{1};
-	static const short hotfix{2};
+	static const short hotfix{3};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"
