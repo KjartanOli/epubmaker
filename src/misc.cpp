@@ -99,8 +99,8 @@ std::vector<fs::path> get_stylesheets(const fs::path& dirname)
 void version()
 {
 	static const short major{1};
-	static const short minor{1};
-	static const short hotfix{3};
+	static const short minor{2};
+	static const short hotfix{2};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"

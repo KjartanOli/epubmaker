@@ -1,9 +1,11 @@
-# Version 1.1.3
+# Version 1.2.2
 ## Fixed
 * Removed unneccesary functions
 * Clarified a few options in help()
 * Fixed a bug that caused cover and tableofcontenst to be added to the opf
 	manifest even when --no-cover and --no-toc where specified
+
+# Version 1.2.1
 
 ## Fixed
 * A filepath related bug which caused the writing of the outfile to fail
