@@ -2,6 +2,8 @@
 ## Fixed
 * Removed unneccesary functions
 * Clarified a few options in help()
+* Fixed a bug that caused cover and tableofcontenst to be added to the opf
+	manifest even when --no-cover and --no-toc where specified
 
 ## Fixed
 * A filepath related bug which caused the writing of the outfile to fail

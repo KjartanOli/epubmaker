@@ -122,7 +122,7 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 	std::string container{this->generate_container_file()};
 	archive.addData("META-INF/container.xml", container.c_str(), container.length());
 
-	std::string opf{this->generate_opf()};
+	std::string opf{this->generate_opf(cover, tableOfContents)};
 	archive.addData("OEBPS/content.opf", opf.c_str(), opf.length());
 
 	std::string ncx{this->generate_ncx(cover, tableOfContents)};
@@ -175,7 +175,7 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 	return NORMAL;
 }
 
-std::string Book::generate_opf() const
+std::string Book::generate_opf(bool cover, bool tableOfContents) const
 {
 	std::stringstream opf{};
 
@@ -218,9 +218,16 @@ std::string Book::generate_opf() const
 	opf << "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>\n\n"
-	<< "\t\t<!-- Chapters -->\n"
-	<< "\t\t" << this->cover.get_manifest_entry() << '\n'
-	<< "\t\t" << this->toc.get_manifest_entry() << '\n';
+	<< "\t\t<!-- Chapters -->\n";
+	if (cover)
+	{
+		opf << "\t\t" << this->cover.get_navPoint() << "\n\n";
+	}
+
+	if (tableOfContents)
+	{
+		opf << "\t\t" << this->toc.get_navPoint() << "\n\n";
+	}
 
 	for (const Chapter& chapter : this->chapters)
 	{

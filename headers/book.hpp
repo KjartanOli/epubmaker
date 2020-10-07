@@ -49,7 +49,7 @@
 			std::string date;
 
 			// Utilities to generate the various structure files
-			std::string generate_opf() const;
+			std::string generate_opf(bool cover, bool tableOfContents) const;
 			std::string generate_ncx(bool cover, bool tableOfContents) const;
 			std::string generate_container_file() const;
 			void  generate_toc(bool cover) const;
