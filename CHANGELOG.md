@@ -2,7 +2,7 @@
 ## Fixed
 * Removed unneccesary functions
 * Clarified a few options in help()
-* Fixed a bug that caused cover and tableofcontenst to be added to the opf
+* Fixed a bug that caused a cover and table of contents to be added to the opf
 	manifest even when --no-cover and --no-toc where specified
 
 # Version 1.2.1
