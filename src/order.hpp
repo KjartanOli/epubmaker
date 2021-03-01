@@ -17,22 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string_view>
+#ifndef ORDER_H
+	#define ORDER_H
 
-#include "resource.hpp"
-#include "manifestEntry.hpp"
-#include "misc.hpp"
-#include "fs.hpp"
+	#include <filesystem>
+	#include <vector>
+	#include <fstream>
 
-Resource::Resource(const fs::path& filepath)
-:
-	filepath{filepath},
-	filename{filepath.filename()},
-	manifestEntry{ManifestEntry{this->filename}}
-{}
+	#include "chapter.hpp"
+	#include "fs.hpp"
 
-std::string Resource::get_manifest_entry() const
-{
-	return static_cast<std::string>(this->manifestEntry);
-}
+	fs::path read_chapter_order(std::ifstream& order, std::vector<fs::path>& chapters);
+#endif
 

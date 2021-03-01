@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
+ * Copyright (C) 2020, 2021  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
- * This file is a part of epubmaker
- * epubmaker is free software: you can redistribute it and/or modify
+ * This file is a part of Epubmaker
+ * Epubmaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * epubmaker is distributed in the hope that it will be useful,
+ * Epubmaker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -17,16 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MEDIATYPE_H
-	#define MEDIATYPE_H
+#ifndef DEFAULTS_H
+	#define DEFAULTS_H
 
-	enum mediaType
+	#include <string_view>
+	namespace defaults
 	{
-		XHTML,
-		CSS,
-		JPEG,
-		PNG,
-		NCX,
-	};
+		extern std::string_view styleDir;
+		extern std::string_view imgDir;
+		extern std::string_view coverfile;
+		extern std::string_view outfile;
+	}
+
 #endif
 

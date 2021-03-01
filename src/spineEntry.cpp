@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
+ * Copyright (C) 2020, 2021  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
- * This file is a part of epubmaker
- * epubmaker is free software: you can redistribute it and/or modify
+ * This file is a part of Epubmaker
+ * Epubmaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * epubmaker is distributed in the hope that it will be useful,
+ * Epubmaker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -20,9 +20,9 @@
 #include <string>
 #include <string_view>
 
-#include "../headers/spineEntry.hpp"
-#include "../headers/misc.hpp"
-#include "../headers/fs.hpp"
+#include "spineEntry.hpp"
+#include "misc.hpp"
+#include "fs.hpp"
 
 SpineEntry::SpineEntry(const fs::path& file, bool primary)
 : idref{file.filename()}, primary{primary}

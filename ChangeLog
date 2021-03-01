@@ -1,0 +1,12 @@
+2021-03-01  Kjartan Óli Ágústsson  <kjartanoli@protonmail.com>
+
+	* src/misc.cpp: Update version number.
+
+	* src/*: Update copyright header.
+
+2021-02-28  Kjartan Oli Agustsson  <kjartanoli@protonmail.com>
+	* epubmaker: Restructure the entire project to use GNU autotools.
+
+Copyright 2020, 2021 Kjartan Óli Ágústsson
+Copying and distribution of this file, with or without modification, are
+permitted provided the copyright notice and this notice are preserved.

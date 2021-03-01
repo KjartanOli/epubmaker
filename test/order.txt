@@ -1,3 +1,0 @@
-/home/kjartan/scripts/epubmaker/test/Text/chapter01.xhtml
-Text/chapter02.xhtml
-chapter03.xhtml

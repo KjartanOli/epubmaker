@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
+ * Copyright (C) 2020, 2021  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
- * This file is a part of epubmaker
- * epubmaker is free software: you can redistribute it and/or modify
+ * This file is a part of Epubmaker
+ * Epubmaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * epubmaker is distributed in the hope that it will be useful,
+ * Epubmaker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,18 +24,18 @@
 #include <fstream>
 #include <iostream>
 
-#include "../headers/filter.hpp"
-#include "../headers/chapter.hpp"
-#include "../headers/status.hpp"
-#include "../headers/args.hpp"
-#include "../headers/misc.hpp"
-#include "../headers/manifestEntry.hpp"
-#include "../headers/spineEntry.hpp"
-#include "../headers/navPoint.hpp"
-#include "../headers/book.hpp"
-#include "../headers/order.hpp"
-#include "../headers/defaults.hpp"
-#include "../headers/fs.hpp"
+#include "filter.hpp"
+#include "chapter.hpp"
+#include "status.hpp"
+#include "args.hpp"
+#include "misc.hpp"
+#include "manifestEntry.hpp"
+#include "spineEntry.hpp"
+#include "navPoint.hpp"
+#include "book.hpp"
+#include "order.hpp"
+#include "defaults.hpp"
+#include "fs.hpp"
 
 const std::string_view orderFile{"order.txt"};
 const short minArgs{2};
@@ -92,12 +92,18 @@ int main(int argc, char** argv)
 		return DIR_DOES_NOT_EXIST;
 	}
 
-	if (!fs::exists(fs::path{args.path / std::string{orderFile.data()}}))
+	if (!fs::exists(fs::path{args.path} / fs::path{orderFile.data()}))
 	{
 		std::cerr << "Directory " << args.path << " Does not contain a " << orderFile << " file\n\n";
 
 		help();
 		return NO_ORDER_FILE;
+	}
+
+	if (args.coverImage != "" && !fs::exists(args.coverImage))
+	{
+		help();
+		return COVER_IMAGE_DOES_NOT_EXIST;
 	}
 
 	std::ifstream order{args.path / orderFile};
@@ -203,11 +209,12 @@ int main(int argc, char** argv)
 		args.stylesheets,
 		args.imgDirs,
 		args.images,
-		args.date
+		args.date,
 	};
 
 	statusCode status{book.write(add_extension(args.outfile, ".epub"), args.force, args.cover, args.toc)};
 
+	std::cout << status << '\n';
 	switch (status)
 	{
 		case OUTFILE_EXISTS:
@@ -254,6 +261,7 @@ void help(std::ostream& out)
 	<< indent << indent << "-i, --identifier=IDENTIFIER      Set the identifier of the document\n"
 	<< indent << indent << "-l, --language=LANGUAGE          Set the language of the document\n"
 	<< indent << indent << "-p, --publisher=PUBLISHER        Set the publisher of the document\n"
+	<< indent << indent << "-ci, --cover-image=COVERIMAGE    Set the cover image of the document\n"
 
 	<< '\n' << indent << "Input control:\n"
 	<< indent << indent <<  "-c, --cover=COVERFILE            Supply the path for a custom cover for the document. If this argument is skipped\n"
@@ -290,6 +298,7 @@ void help(std::ostream& out)
 	<< indent << IMGDIR_DOES_NOT_EXIST << "\tA directory for images does not exist and --no-images wan not specified\n"
 	<< indent << OUTFILE_EXISTS << "\tThe target file already exists and --force was not specified\n"
 	<< indent << COULD_NOT_OPEN << "\tFailed to open output file\n"
+	<< indent << COVER_IMAGE_DOES_NOT_EXIST << "\tThe cover image specified does not exist\n"
 	<< indent << UNKOWN_ERROR << "\tAn unknown error occurred, this should never occur\n"
 	<< '\n';
 }

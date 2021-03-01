@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
+ * Copyright (C) 2020, 2021 Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
- * This file is a part of epubmaker
- * epubmaker is free software: you can redistribute it and/or modify
+ * This file is a part of Epubmaker
+ * Epubmaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * epubmaker is distributed in the hope that it will be useful,
+ * Epubmaker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -25,10 +25,10 @@
 
 #include <libzippp/libzippp.h>
 
-#include "../headers/book.hpp"
-#include "../headers/misc.hpp"
-#include "../headers/status.hpp"
-#include "../headers/fs.hpp"
+#include "book.hpp"
+#include "misc.hpp"
+#include "status.hpp"
+#include "fs.hpp"
 
 Book::Book(
 	const fs::path& path,
@@ -106,7 +106,7 @@ statusCode Book::write(std::string_view filename, bool force, bool cover, bool t
 	}
 
 	libzippp::ZipArchive archive{(this->path / filename).c_str()};
-	if (!archive.open(force ? libzippp::ZipArchive::NEW : libzippp::ZipArchive::WRITE))
+	if (!archive.open(libzippp::ZipArchive::New))
 	{
 		return COULD_NOT_OPEN;
 	}
@@ -215,18 +215,19 @@ std::string Book::generate_opf(bool cover, bool tableOfContents) const
 		std::time_t date{std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
 		opf << "\t\t<dc:date>" << std::put_time(std::localtime(&date), "%Y-%m-%d") << "</dc:date>\n";
 	}
+
 	opf << "\t</metadata>\n\n"
 	<< "\t<manifest>\n"
 	<< "\t\t<item href=\"toc.ncx\" id=\"toc\" media-type=\"application/x-dtbncx+xml\"/>\n\n"
 	<< "\t\t<!-- Chapters -->\n";
 	if (cover)
 	{
-		opf << "\t\t" << this->cover.get_navPoint() << "\n\n";
+		opf << "\t\t" << this->cover.get_manifest_entry() << "\n\n";
 	}
 
 	if (tableOfContents)
 	{
-		opf << "\t\t" << this->toc.get_navPoint() << "\n\n";
+		opf << "\t\t" << this->toc.get_manifest_entry() << "\n\n";
 	}
 
 	for (const Chapter& chapter : this->chapters)

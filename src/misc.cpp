@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2020  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
+ * Copyright (C) 2020, 2021  Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  * Author: Ágústsson, Kjartan Óli <kjartanoli@protonmail.com>
  *
- * This file is a part of epubmaker
- * epubmaker is free software: you can redistribute it and/or modify
+ * This file is a part of Epubmaker
+ * Epubmaker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * epubmaker is distributed in the hope that it will be useful,
+ * Epubmaker is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,11 +24,11 @@
 #include <map>
 #include <regex>
 
-#include "../headers/misc.hpp"
-#include "../headers/status.hpp"
-#include "../headers/filter.hpp"
-#include "../headers/mediaType.hpp"
-#include "../headers/fs.hpp"
+#include "misc.hpp"
+#include "status.hpp"
+#include "filter.hpp"
+#include "mediaType.hpp"
+#include "fs.hpp"
 
 std::string get_mediaType(std::string_view extension)
 {
@@ -98,9 +98,9 @@ std::vector<fs::path> get_stylesheets(const fs::path& dirname)
 
 void version()
 {
-	static const short major{1};
-	static const short minor{2};
-	static const short hotfix{2};
+	static const short major{2};
+	static const short minor{0};
+	static const short hotfix{0};
 
 	std::cout << "Epubmaker " << major << '.' << minor << '.' << hotfix << '\n'
 	<< "This program comes with ABSOLUTELY NO WARRANTY.\n"
