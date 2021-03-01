@@ -9,3 +9,5 @@ install-sh
 missing
 compile_commands.json
 src/.deps
+build
+compile
