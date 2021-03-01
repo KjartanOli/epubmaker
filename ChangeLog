@@ -1,5 +1,7 @@
 2021-03-01  Kjartan Óli Ágústsson  <kjartanoli@protonmail.com>
 
+	* README.org: Add .org extension
+
 	* src/misc.cpp: Update version number.
 
 	* src/*: Update copyright header.
