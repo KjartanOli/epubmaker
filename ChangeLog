@@ -1,11 +1,15 @@
+2021-04-14  Kjartan Óli Ágústsson  <kjartanoli@protonmail.com>
+
+	* README.md: Add deprecation notice.
+
 2021-03-01  Kjartan Óli Ágústsson  <kjartanoli@protonmail.com>
 
+	* src/Makefile.am (epubmaker_CPPFLAGS): Remove
+
+	* README.org (Requirements): Update libzippp link to use org link formatting.
+	(Getting started, Usage): Update Markdown code blocks to Org mode code blocks.
+
 	* configure.ac: Check for the existance of libzip on the target system.
-
-	* autogen.sh: Temporarily remove .org extension from NEWS.org and README.org to avoid automake errors
-
-	* NEWS.org: Add .org extension
-	* README.org: Add .org extension
 
 	* src/misc.cpp: Update version number.
 
